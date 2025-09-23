@@ -2,7 +2,9 @@ import streamlit as st
 import json
 import matplotlib.pyplot as plt
 import os
+import requests
 from datetime import datetime
+
 
 
 st.set_page_config(page_title="Penghitung Konsumsi Listrik", page_icon="⚡", layout="wide")
@@ -151,7 +153,29 @@ elif menu == "Lihat Hasil":
         
  
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
-        
+
+        if st.button("Dapatkan Analisis AI"):
+    url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
+    
+    payload = {
+        "total_kwh": total_kwh,
+        "total_biaya": total_biaya,
+        "alat_listrik": st.session_state.alat_listrik
+    }
+    
+    headers = {"Content-Type": "application/json"}
+    
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        if response.status_code == 200:
+            hasil_ai = response.json()
+            
+            st.subheader("📊 Analisis AI Konsumsi Listrik")
+            st.json(hasil_ai)
+        else:
+            st.error(f"Webhook error: {response.status_code} - {response.text}")
+    except Exception as e:
+        st.error(f"Gagal koneksi ke n8n: {e}")
 
         if total_energi > 200:
             st.subheader("💡 Tips Penghematan Energi")
@@ -233,3 +257,4 @@ elif menu == "Simpan Data":
 st.sidebar.markdown("---")
 
 st.sidebar.info("Aplikasi Penghitung Konsumsi Listrik Rumah Tangga")
+
