@@ -143,19 +143,35 @@ elif menu == "Lihat Hasil":
                 "alat_listrik": st.session_state.alat_listrik
             }
             
-            headers = {"Content-Type": "application/json"}
-            
-            try:
-                response = requests.post(url, headers=headers, data=json.dumps(payload))
-                if response.status_code == 200:
-                    hasil_ai = response.json()
+            # Menambahkan loading indicator
+            with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu sebentar"):
+                try:
+                    # Menggunakan requests.post dengan parameter json langsung
+                    response = requests.post(url, json=payload, timeout=30)
                     
-                    st.subheader("📊 Analisis AI Konsumsi Listrik")
-                    st.write(hasil_ai)
-                else:
-                    st.error(f"Webhook error: {response.status_code} - {response.text}")
-            except Exception as e:
-                st.error(f"Gagal koneksi ke n8n: {e}")
+                    if response.status_code == 200:
+                        # Menggunakan response.text() bukan response.json()
+                        hasil_ai = response.text
+                        
+                        st.subheader("📊 Analisis AI Konsumsi Listrik")
+                        
+                        # Coba parsing sebagai JSON, jika gagal tampilkan sebagai teks biasa
+                        try:
+                            hasil_json = json.loads(hasil_ai)
+                            st.json(hasil_json)
+                        except json.JSONDecodeError:
+                            # Jika bukan JSON, tampilkan sebagai teks biasa
+                            st.write("**Hasil Analisis:**")
+                            st.write(hasil_ai)
+                            
+                    else:
+                        st.error(f"Webhook error: {response.status_code} - {response.text}")
+                except requests.exceptions.Timeout:
+                    st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
+                except requests.exceptions.ConnectionError:
+                    st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet Anda.")
+                except Exception as e:
+                    st.error(f"❌ Gagal koneksi ke n8n: {e}")
 
         if total_energi > 200:
             st.subheader("💡 Tips Penghematan Energi")
@@ -205,26 +221,27 @@ elif menu == "Simpan Data":
         st.json(st.session_state.alat_listrik, expanded=False)
         
         if st.button("Simpan Data ke File JSON"):
-            if simpan_ke_file():
-                st.success("Data berhasil disimpan ke file 'data_listrik.json'")
-                
-                file_info = os.stat("data_listrik.json")
-                st.write(f"Ukuran file: {file_info.st_size} bytes")
-                st.write(f"Tanggal modifikasi: {datetime.fromtimestamp(file_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')}")
+            # Loading indicator untuk simpan data
+            with st.spinner("💾 Menyimpan data..."):
+                if simpan_ke_file():
+                    st.success("Data berhasil disimpan ke file 'data_listrik.json'")
+                    
+                    file_info = os.stat("data_listrik.json")
+                    st.write(f"Ukuran file: {file_info.st_size} bytes")
+                    st.write(f"Tanggal modifikasi: {datetime.fromtimestamp(file_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')}")
     
     else:
         st.warning("Belum ada data alat listrik. Silakan tambah data terlebih dahulu.")
     
     st.subheader("Muat Data dari File")
     if st.button("Muat Data dari File JSON"):
-        if muat_dari_file():
-            st.success("Data berhasil dimuat dari file 'data_listrik.json'")
-            st.rerun()
-        else:
-            st.error("File 'data_listrik.json' tidak ditemukan atau format tidak valid.")
+        # Loading indicator untuk muat data
+        with st.spinner("📂 Memuat data..."):
+            if muat_dari_file():
+                st.success("Data berhasil dimuat dari file 'data_listrik.json'")
+                st.rerun()
+            else:
+                st.error("File 'data_listrik.json' tidak ditemukan atau format tidak valid.")
 
 st.sidebar.markdown("---")
 st.sidebar.info("Aplikasi Penghitung Konsumsi Listrik Rumah Tangga")
-
-
-
