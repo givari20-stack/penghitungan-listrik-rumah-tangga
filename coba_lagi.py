@@ -12,22 +12,25 @@ if 'alat_listrik' not in st.session_state:
     st.session_state.alat_listrik = []
 
 if 'tarif_listrik' not in st.session_state:
-    st.session_state.tarif_listrik = 1500
+    st.session_state.tarif_listrik = 1500  
 
 def hitung_energi_dan_biaya(daya, jam_per_hari, hari_per_bulan, tarif):
-    energi = (daya * jam_per_hari * hari_per_bulan) / 1000
+    energi = (daya * jam_per_hari * hari_per_bulan) / 1000  
     biaya = energi * tarif
     return energi, biaya
 
 def hitung_biaya_tiered(kwh_total):
+    """
+    Fungsi untuk menghitung biaya dengan sistem tiered/bertingkat
+    """
     if kwh_total <= 50:
-        return kwh_total * 1000
+        return kwh_total * 1000  
     elif kwh_total <= 100:
-        return (50 * 1000) + ((kwh_total - 50) * 1200)
+        return (50 * 1000) + ((kwh_total - 50) * 1200)  
     elif kwh_total <= 200:
-        return (50 * 1000) + (50 * 1200) + ((kwh_total - 100) * 1500)
+        return (50 * 1000) + (50 * 1200) + ((kwh_total - 100) * 1500)  
     else:
-        return (50 * 1000) + (50 * 1200) + (100 * 1500) + ((kwh_total - 200) * 2000)
+        return (50 * 1000) + (50 * 1200) + (100 * 1500) + ((kwh_total - 200) * 2000)  
 
 def simpan_ke_file():
     try:
@@ -51,7 +54,7 @@ def muat_dari_file():
 menu = st.sidebar.radio("Menu Navigasi", ["Tambah Data", "Lihat Hasil", "Grafik", "Simpan Data"])
 
 st.sidebar.subheader("Pengaturan Tarif Listrik")
-tarif_baru = st.sidebar.number_input("Tarif Listrik (Rp/kWh)", min_value=500, max_value=5000,
+tarif_baru = st.sidebar.number_input("Tarif Listrik (Rp/kWh)", min_value=500, max_value=5000, 
                                      value=st.session_state.tarif_listrik, step=100)
 if tarif_baru != st.session_state.tarif_listrik:
     st.session_state.tarif_listrik = tarif_baru
@@ -131,11 +134,7 @@ elif menu == "Lihat Hasil":
         
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
 
-        # Bagian AI Analysis - VERSI SEDERHANA
-        st.markdown("---")
-        st.subheader("🤖 Analisis AI")
-        
-        if st.button("Dapatkan Analisis AI", type="primary"):
+        if st.button("Dapatkan Analisis AI"):
             url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
             
             payload = {
@@ -144,81 +143,91 @@ elif menu == "Lihat Hasil":
                 "alat_listrik": st.session_state.alat_listrik
             }
             
-            st.write("📤 Mengirim data ke AI...")
-            st.json(payload, expanded=False)
-            
-            with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu 10-30 detik"):
+            # Menambahkan loading indicator
+            with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu sebentar"):
                 try:
-                    # Kirim request dengan timeout lebih lama
-                    response = requests.post(url, json=payload, timeout=30)
-                    
-                    st.write(f"📥 Status Response: {response.status_code}")
+                    # Menggunakan requests.post dengan parameter json langsung
+                    response = requests.post(url, json=payload, timeout=60)
                     
                     if response.status_code == 200:
-                        st.success("✅ Berhasil terhubung ke AI!")
+                        # Langsung ambil sebagai text
+                        hasil_ai = response.text
                         
-                        # Tampilkan raw response lengkap
-                        st.subheader("Raw Response dari AI:")
-                        st.code(response.text)
+                        st.subheader("📊 Analisis AI Konsumsi Listrik")
+                        st.success("✅ Analisis Berhasil!")
                         
-                        # Coba ekstrak konten dengan berbagai metode
-                        raw_text = response.text
-                        
-                        # Method 1: Cari pattern content:
-                        if "content:" in raw_text:
-                            st.success("🎯 Ditemukan pattern 'content:'")
-                            parts = raw_text.split("content:")
-                            if len(parts) > 1:
-                                content = parts[1]
-                                # Bersihkan content
-                                if "refusal:" in content:
-                                    content = content.split("refusal:")[0]
-                                if "annotations:" in content:
-                                    content = content.split("annotations:")[0]
-                                
-                                content = content.strip()
-                                content = content.replace('\\n', '\n')
-                                
-                                st.subheader("📊 Hasil Analisis AI:")
-                                st.markdown(content)
-                            else:
-                                st.error("❌ Gagal memisahkan content")
-                        else:
-                            st.warning("⚠️ Pattern 'content:' tidak ditemukan")
+                        # Fungsi untuk membersihkan dan memformat teks
+                        def format_ai_response(text):
+                            # Handle berbagai format yang mungkin
                             
-                            # Method 2: Tampilkan langsung jika pendek
-                            if len(raw_text) < 1000:
-                                st.subheader("📊 Hasil Analisis AI:")
-                                st.write(raw_text)
+                            # Jika mengandung pattern role:assistant
+                            if "role:assistant" in text and "content:" in text:
+                                # Ambil bagian setelah "content:"
+                                content_start = text.find("content:") + len("content:")
+                                content = text[content_start:].strip()
+                                # Hapus karakter escape sequence
+                                content = content.replace('\\n', '\n')
+                                return content
+                            
+                            # Jika format JSON-like
+                            elif "{" in text and "}" in text:
+                                try:
+                                    # Coba parse sebagai JSON
+                                    json_data = json.loads(text)
+                                    if "content" in json_data:
+                                        return json_data["content"]
+                                    elif "response" in json_data:
+                                        return json_data["response"]
+                                    elif "message" in json_data:
+                                        return json_data["message"]
+                                    else:
+                                        return str(json_data)
+                                except:
+                                    # Jika gagal parse JSON, return as-is
+                                    return text
+                            
+                            # Jika plain text biasa
                             else:
-                                st.info("Response terlalu panjang, cek tab Raw Response di atas")
-                    
+                                # Bersihkan teks dari karakter khusus
+                                text = text.replace('\\n', '\n')
+                                text = text.replace('\\"', '"')
+                                return text
+                        
+                        # Format dan tampilkan hasil
+                        formatted_result = format_ai_response(hasil_ai)
+                        
+                        # Tampilkan dalam box yang rapi
+                        st.markdown("### 📋 Hasil Analisis AI")
+                        st.markdown("---")
+                        st.markdown(formatted_result)
+                        st.markdown("---")
+                        
+                        # Tampilkan raw response untuk debugging (bisa dihide)
+                        with st.expander("🔧 Raw Response (Debug)"):
+                            st.code(hasil_ai)
+                            
                     else:
                         st.error(f"❌ Error dari server: {response.status_code}")
-                        st.text(f"Response: {response.text}")
+                        st.write("Response:", response.text)
                         
                 except requests.exceptions.Timeout:
-                    st.error("⏰ Waktu permintaan habis. Server mungkin sedang lambat.")
+                    st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
                 except requests.exceptions.ConnectionError:
-                    st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet.")
+                    st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet Anda.")
                 except Exception as e:
-                    st.error(f"❌ Terjadi kesalahan: {str(e)}")
+                    st.error(f"❌ Gagal koneksi ke n8n: {e}")
+                    st.write("Detail error:", str(e))
 
-        # Tips manual
         if total_energi > 200:
-            st.markdown("---")
             st.subheader("💡 Tips Penghematan Energi")
-            
             tips = """
-            **Untuk menghemat listrik:**
+            - Pertimbangkan menggunakan alat dengan daya lebih rendah
             - Matikan alat elektronik ketika tidak digunakan
-            - Gunakan lampu LED hemat energi
-            - Atur AC pada suhu 24-25°C
-            - Cabut charger setelah selesai
-            - Gunakan peralatan hemat energi
+            - Manfaatkan pencahayaan alami di siang hari
+            - Gunakan AC pada suhu 24-25°C untuk efisiensi maksimal
+            - Pertimbangkan menggunakan peralatan hemat energi
             """
             st.markdown(tips)
-
     else:
         st.warning("Belum ada data alat listrik. Silakan tambah data terlebih dahulu.")
 
@@ -257,6 +266,7 @@ elif menu == "Simpan Data":
         st.json(st.session_state.alat_listrik, expanded=False)
         
         if st.button("Simpan Data ke File JSON"):
+            # Loading indicator untuk simpan data
             with st.spinner("💾 Menyimpan data..."):
                 if simpan_ke_file():
                     st.success("Data berhasil disimpan ke file 'data_listrik.json'")
@@ -270,6 +280,7 @@ elif menu == "Simpan Data":
     
     st.subheader("Muat Data dari File")
     if st.button("Muat Data dari File JSON"):
+        # Loading indicator untuk muat data
         with st.spinner("📂 Memuat data..."):
             if muat_dari_file():
                 st.success("Data berhasil dimuat dari file 'data_listrik.json'")
