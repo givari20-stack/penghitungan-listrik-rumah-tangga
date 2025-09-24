@@ -53,41 +53,54 @@ def ekstrak_konten_ai(response_text):
     """
     Fungsi untuk mengekstrak konten dari response n8n AI
     """
+    st.write("🔍 Memproses response...")
+    
+    # Tampilkan raw response untuk debugging
+    st.write("📄 Raw response length:", len(response_text))
+    st.write("📄 First 500 chars:", response_text[:500])
+    
+    # Method 1: Coba parsing sebagai JSON
     try:
-        # Coba parsing sebagai JSON
         data = json.loads(response_text)
+        st.success("✅ Berhasil parsing JSON")
+        st.write("📊 JSON structure:", type(data))
         
-        # Format 1: Array dengan message content
-        if isinstance(data, list) and len(data) > 0:
-            if 'message' in data[0] and 'content' in data[0]['message']:
-                content = data[0]['message']['content']
-                content = content.replace('\\n', '\n')
-                return content
-                
-        # Format 2: Object langsung dengan content
+        if isinstance(data, list):
+            st.write("📋 Data adalah list, panjang:", len(data))
+            if len(data) > 0:
+                st.write("📋 Item pertama:", data[0])
+                if 'message' in data[0]:
+                    content = data[0]['message']['content']
+                    st.success("✅ Berhasil ekstrak content dari message")
+                    return content.replace('\\n', '\n')
+        
+        # Jika langsung ada content
         if 'content' in data:
-            content = data['content']
-            content = content.replace('\\n', '\n')
-            return content
+            st.success("✅ Berhasil ekstrak content langsung")
+            return data['content'].replace('\\n', '\n')
             
-    except json.JSONDecodeError:
-        # Jika bukan JSON, ekstrak dari text langsung
-        if 'content:' in response_text:
-            # Split by content: and take the part after it
-            parts = response_text.split('content:', 1)
-            if len(parts) > 1:
-                content = parts[1]
-                # Remove refusal and annotations parts
-                if 'refusal:' in content:
-                    content = content.split('refusal:')[0]
-                if 'annotations:' in content:
-                    content = content.split('annotations:')[0]
-                
-                content = content.strip()
-                content = content.replace('\\n', '\n')
-                return content
+    except json.JSONDecodeError as e:
+        st.warning(f"⚠️ Bukan JSON: {e}")
+    
+    # Method 2: Ekstrak manual dari text
+    if 'content:' in response_text:
+        st.info("ℹ️ Mencoba ekstrak manual dari 'content:'")
+        parts = response_text.split('content:', 1)
+        if len(parts) > 1:
+            content = parts[1]
+            # Hapus bagian setelah refusal atau annotations
+            if 'refusal:' in content:
+                content = content.split('refusal:')[0]
+            if 'annotations:' in content:
+                content = content.split('annotations:')[0]
+            
+            content = content.strip()
+            content = content.replace('\\n', '\n')
+            st.success("✅ Berhasil ekstrak manual")
+            return content
     
     # Fallback: return original text
+    st.info("ℹ️ Menggunakan response asli")
     return response_text.replace('\\n', '\n')
 
 menu = st.sidebar.radio("Menu Navigasi", ["Tambah Data", "Lihat Hasil", "Grafik", "Simpan Data"])
@@ -173,7 +186,7 @@ elif menu == "Lihat Hasil":
         
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
 
-        # BAGIAN AI ANALYSIS - YANG SUDAH BERHASIL
+        # BAGIAN AI ANALYSIS - DENGAN DEBUG DETAIL
         st.markdown("---")
         st.subheader("🤖 Analisis AI")
         
@@ -188,40 +201,52 @@ elif menu == "Lihat Hasil":
             
             with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu 10-20 detik"):
                 try:
+                    st.write("📤 Mengirim request ke AI...")
                     response = requests.post(url, json=payload, timeout=30)
                     
+                    st.write(f"📥 Status Response: {response.status_code}")
+                    st.write(f"📥 Content Type: {response.headers.get('content-type', 'Unknown')}")
+                    
                     if response.status_code == 200:
-                        st.success("✅ Analisis AI Berhasil!")
+                        st.success("✅ Berhasil terhubung ke AI!")
+                        
+                        # Simpan response ke session state untuk debugging
+                        st.session_state.last_ai_response = response.text
                         
                         # Ekstrak konten dari response
+                        st.write("🔧 Memulai ekstraksi konten...")
                         ai_content = ekstrak_konten_ai(response.text)
+                        
+                        st.write(f"📊 Panjang konten yang diekstrak: {len(ai_content)} karakter")
                         
                         # Tampilkan hasil analisis
                         st.markdown("---")
                         st.subheader("📊 Hasil Analisis AI")
                         
-                        # Tampilkan dalam box yang rapi
-                        st.markdown(f"""
-                        <div style="
-                            background-color: #f8f9fa;
-                            padding: 20px;
-                            border-radius: 10px;
-                            border-left: 5px solid #4CAF50;
-                            margin: 10px 0;
-                            white-space: pre-wrap;
-                            font-family: Arial, sans-serif;
-                        ">
-                        {ai_content}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        if ai_content and len(ai_content.strip()) > 10:
+                            # Tampilkan konten
+                            st.markdown(ai_content)
+                            
+                            # Juga tampilkan dalam box
+                            st.markdown("---")
+                            st.subheader("📋 Hasil Format Rapi")
+                            st.info(ai_content)
+                        else:
+                            st.error("❌ Konten AI kosong atau terlalu pendek")
+                            st.write("Konten yang didapat:", ai_content)
                         
-                        # Debug info (bisa disembunyikan)
-                        with st.expander("🔧 Raw Response (Debug)"):
+                        # Debug info
+                        with st.expander("🔧 Debug Detail"):
+                            st.subheader("Raw Response")
                             st.code(response.text)
+                            st.subheader("Extracted Content")
+                            st.code(ai_content)
+                            st.subheader("Payload yang dikirim")
+                            st.json(payload)
                         
                     else:
                         st.error(f"❌ Error dari server: {response.status_code}")
-                        st.text(f"Response: {response.text}")
+                        st.text_area("Error Response:", response.text, height=100)
                         
                 except requests.exceptions.Timeout:
                     st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
