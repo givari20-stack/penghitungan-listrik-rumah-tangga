@@ -49,59 +49,47 @@ def muat_dari_file():
         st.error(f"Gagal memuat data: {e}")
     return False
 
-def ekstrak_konten_ai(response_text):
-    """
-    Fungsi untuk mengekstrak konten dari response n8n AI
-    """
-    st.write("🔍 Memproses response...")
+def buat_analisis_manual(total_energi, total_biaya, alat_listrik):
+    """Fungsi untuk membuat analisis manual jika AI tidak merespons"""
     
-    # Tampilkan raw response untuk debugging
-    st.write("📄 Raw response length:", len(response_text))
-    st.write("📄 First 500 chars:", response_text[:500])
+    # Cari alat dengan konsumsi tertinggi
+    alat_tertinggi = max(alat_listrik, key=lambda x: x['energi'])
     
-    # Method 1: Coba parsing sebagai JSON
-    try:
-        data = json.loads(response_text)
-        st.success("✅ Berhasil parsing JSON")
-        st.write("📊 JSON structure:", type(data))
-        
-        if isinstance(data, list):
-            st.write("📋 Data adalah list, panjang:", len(data))
-            if len(data) > 0:
-                st.write("📋 Item pertama:", data[0])
-                if 'message' in data[0]:
-                    content = data[0]['message']['content']
-                    st.success("✅ Berhasil ekstrak content dari message")
-                    return content.replace('\\n', '\n')
-        
-        # Jika langsung ada content
-        if 'content' in data:
-            st.success("✅ Berhasil ekstrak content langsung")
-            return data['content'].replace('\\n', '\n')
-            
-    except json.JSONDecodeError as e:
-        st.warning(f"⚠️ Bukan JSON: {e}")
-    
-    # Method 2: Ekstrak manual dari text
-    if 'content:' in response_text:
-        st.info("ℹ️ Mencoba ekstrak manual dari 'content:'")
-        parts = response_text.split('content:', 1)
-        if len(parts) > 1:
-            content = parts[1]
-            # Hapus bagian setelah refusal atau annotations
-            if 'refusal:' in content:
-                content = content.split('refusal:')[0]
-            if 'annotations:' in content:
-                content = content.split('annotations:')[0]
-            
-            content = content.strip()
-            content = content.replace('\\n', '\n')
-            st.success("✅ Berhasil ekstrak manual")
-            return content
-    
-    # Fallback: return original text
-    st.info("ℹ️ Menggunakan response asli")
-    return response_text.replace('\\n', '\n')
+    analisis = f"""
+## 📊 Analisis Konsumsi Listrik (Manual)
+
+### 1. Alat dengan Konsumsi Tertinggi
+**{alat_tertinggi['nama'].title()}** adalah alat yang paling banyak mengonsumsi listrik:
+- Daya: {alat_tertinggi['daya']} Watt
+- Konsumsi: {alat_tertinggi['energi']:.2f} kWh/bulan
+- Biaya: Rp {alat_tertinggi['biaya']:,.0f}
+
+### 2. Rekomendasi Penghematan
+
+#### 💡 Optimalkan Penggunaan {alat_tertinggi['nama'].title()}
+- Kurangi waktu penggunaan jika memungkinkan
+- Gunakan mode hemat energi jika tersedia
+- Matikan saat tidak digunakan
+
+#### 🔌 Manajemen Peralatan Lainnya
+- **Lampu**: Gunakan LED, matikan saat siang hari
+- **AC**: Set suhu 24-25°C, bersihkan filter secara berkala
+- **Elektronik**: Hindari mode standby, gunakan stop kontak dengan switch
+
+### 3. Estimasi Penghematan Potensial
+Dengan optimasi yang tepat, Anda dapat menghemat:
+- **Energi**: 10-20% dari total konsumsi ({total_energi * 0.15:.2f} kWh)
+- **Biaya**: Rp {total_biaya * 0.15:,.0f} per bulan
+
+### 4. Tips Tambahan
+- Gunakan peralatan hemat energi
+- Manfaatkan pencahayaan alami
+- Lakukan perawatan berkala pada peralatan
+- Pantau konsumsi secara rutin
+
+*Catatan: Analisis ini dibuat otomatis berdasarkan data yang dimasukkan.*
+"""
+    return analisis
 
 menu = st.sidebar.radio("Menu Navigasi", ["Tambah Data", "Lihat Hasil", "Grafik", "Simpan Data"])
 
@@ -186,74 +174,88 @@ elif menu == "Lihat Hasil":
         
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
 
-        # BAGIAN AI ANALYSIS - DENGAN DEBUG DETAIL
+        # BAGIAN AI ANALYSIS - DENGAN FALLBACK MANUAL
         st.markdown("---")
         st.subheader("🤖 Analisis AI")
         
-        if st.button("Dapatkan Analisis AI", type="primary"):
-            url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
-            
-            payload = {
-                "total_kwh": total_energi,
-                "total_biaya": total_biaya,
-                "alat_listrik": st.session_state.alat_listrik
-            }
-            
-            with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu 10-20 detik"):
-                try:
-                    st.write("📤 Mengirim request ke AI...")
-                    response = requests.post(url, json=payload, timeout=30)
-                    
-                    st.write(f"📥 Status Response: {response.status_code}")
-                    st.write(f"📥 Content Type: {response.headers.get('content-type', 'Unknown')}")
-                    
-                    if response.status_code == 200:
-                        st.success("✅ Berhasil terhubung ke AI!")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button("Dapatkan Analisis AI", type="primary", use_container_width=True):
+                url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
+                
+                payload = {
+                    "total_kwh": total_energi,
+                    "total_biaya": total_biaya,
+                    "alat_listrik": st.session_state.alat_listrik
+                }
+                
+                with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu 10-20 detik"):
+                    try:
+                        response = requests.post(url, json=payload, timeout=30)
                         
-                        # Simpan response ke session state untuk debugging
-                        st.session_state.last_ai_response = response.text
-                        
-                        # Ekstrak konten dari response
-                        st.write("🔧 Memulai ekstraksi konten...")
-                        ai_content = ekstrak_konten_ai(response.text)
-                        
-                        st.write(f"📊 Panjang konten yang diekstrak: {len(ai_content)} karakter")
-                        
-                        # Tampilkan hasil analisis
-                        st.markdown("---")
-                        st.subheader("📊 Hasil Analisis AI")
-                        
-                        if ai_content and len(ai_content.strip()) > 10:
-                            # Tampilkan konten
-                            st.markdown(ai_content)
-                            
-                            # Juga tampilkan dalam box
-                            st.markdown("---")
-                            st.subheader("📋 Hasil Format Rapi")
-                            st.info(ai_content)
+                        if response.status_code == 200:
+                            # Periksa apakah response mengandung konten yang berarti
+                            if len(response.text.strip()) > 50:  # Jika response cukup panjang
+                                st.success("✅ Berhasil mendapatkan analisis AI!")
+                                
+                                # Tampilkan konten AI
+                                st.markdown("---")
+                                st.subheader("📊 Hasil Analisis AI")
+                                st.markdown(response.text)
+                                
+                            else:
+                                # Jika response terlalu pendek, gunakan analisis manual
+                                st.warning("⚠️ Response AI terlalu pendek, menggunakan analisis manual...")
+                                analisis_manual = buat_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                                st.markdown("---")
+                                st.subheader("📊 Analisis Manual (Fallback)")
+                                st.markdown(analisis_manual)
+                                
                         else:
-                            st.error("❌ Konten AI kosong atau terlalu pendek")
-                            st.write("Konten yang didapat:", ai_content)
+                            st.error(f"❌ Error dari server AI: {response.status_code}")
+                            # Fallback ke analisis manual
+                            analisis_manual = buat_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                            st.markdown("---")
+                            st.subheader("📊 Analisis Manual (Fallback)")
+                            st.markdown(analisis_manual)
+                            
+                    except requests.exceptions.Timeout:
+                        st.error("⏰ Waktu permintaan habis. Menggunakan analisis manual...")
+                        analisis_manual = buat_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                        st.markdown("---")
+                        st.subheader("📊 Analisis Manual (Fallback)")
+                        st.markdown(analisis_manual)
                         
-                        # Debug info
-                        with st.expander("🔧 Debug Detail"):
-                            st.subheader("Raw Response")
-                            st.code(response.text)
-                            st.subheader("Extracted Content")
-                            st.code(ai_content)
-                            st.subheader("Payload yang dikirim")
-                            st.json(payload)
+                    except requests.exceptions.ConnectionError:
+                        st.error("🔌 Gagal terhubung ke server. Menggunakan analisis manual...")
+                        analisis_manual = buat_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                        st.markdown("---")
+                        st.subheader("📊 Analisis Manual (Fallback)")
+                        st.markdown(analisis_manual)
                         
-                    else:
-                        st.error(f"❌ Error dari server: {response.status_code}")
-                        st.text_area("Error Response:", response.text, height=100)
-                        
-                except requests.exceptions.Timeout:
-                    st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
-                except requests.exceptions.ConnectionError:
-                    st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet.")
-                except Exception as e:
-                    st.error(f"❌ Terjadi kesalahan: {str(e)}")
+                    except Exception as e:
+                        st.error(f"❌ Terjadi kesalahan: {str(e)}")
+                        analisis_manual = buat_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                        st.markdown("---")
+                        st.subheader("📊 Analisis Manual (Fallback)")
+                        st.markdown(analisis_manual)
+        
+        with col2:
+            if st.button("🔄 Coba Lagi", use_container_width=True):
+                st.rerun()
+
+        # Tips penghematan standar
+        if total_energi > 200:
+            st.markdown("---")
+            st.subheader("💡 Tips Penghematan Energi")
+            tips = """
+            - **Lampu**: Ganti dengan LED, matikan saat tidak diperlukan
+            - **AC**: Set suhu 24-25°C, tutup ruangan saat digunakan
+            - **Elektronik**: Hindari mode standby, gunakan power strip
+            - **Peralatan**: Pilih yang berlabel hemat energi
+            - **Kebiasaan**: Matikan alat yang tidak digunakan
+            """
+            st.markdown(tips)
 
     else:
         st.warning("Belum ada data alat listrik. Silakan tambah data terlebih dahulu.")
