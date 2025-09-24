@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import requests
 from datetime import datetime
+import re
 
 st.set_page_config(page_title="Penghitung Konsumsi Listrik", page_icon="⚡", layout="wide")
 st.title("⚡ Penghitung Konsumsi Listrik Rumah Tangga")
@@ -12,25 +13,22 @@ if 'alat_listrik' not in st.session_state:
     st.session_state.alat_listrik = []
 
 if 'tarif_listrik' not in st.session_state:
-    st.session_state.tarif_listrik = 1500  
+    st.session_state.tarif_listrik = 1500
 
 def hitung_energi_dan_biaya(daya, jam_per_hari, hari_per_bulan, tarif):
-    energi = (daya * jam_per_hari * hari_per_bulan) / 1000  
+    energi = (daya * jam_per_hari * hari_per_bulan) / 1000
     biaya = energi * tarif
     return energi, biaya
 
 def hitung_biaya_tiered(kwh_total):
-    """
-    Fungsi untuk menghitung biaya dengan sistem tiered/bertingkat
-    """
     if kwh_total <= 50:
-        return kwh_total * 1000  
+        return kwh_total * 1000
     elif kwh_total <= 100:
-        return (50 * 1000) + ((kwh_total - 50) * 1200)  
+        return (50 * 1000) + ((kwh_total - 50) * 1200)
     elif kwh_total <= 200:
-        return (50 * 1000) + (50 * 1200) + ((kwh_total - 100) * 1500)  
+        return (50 * 1000) + (50 * 1200) + ((kwh_total - 100) * 1500)
     else:
-        return (50 * 1000) + (50 * 1200) + (100 * 1500) + ((kwh_total - 200) * 2000)  
+        return (50 * 1000) + (50 * 1200) + (100 * 1500) + ((kwh_total - 200) * 2000)
 
 def simpan_ke_file():
     try:
@@ -51,10 +49,58 @@ def muat_dari_file():
         st.error(f"Gagal memuat data: {e}")
     return False
 
+def generate_analisis_manual(total_energi, total_biaya, alat_listrik):
+    """Generate analisis manual jika AI tidak bekerja"""
+    if not alat_listrik:
+        return "Tidak ada data alat listrik untuk dianalisis."
+    
+    # Cari alat dengan konsumsi tertinggi
+    alat_tertinggi = max(alat_listrik, key=lambda x: x['energi'])
+    
+    analisis = f"""
+## 📊 Analisis Konsumsi Listrik Anda
+
+### 📈 Ringkasan Konsumsi
+- **Total konsumsi bulanan:** {total_energi:.2f} kWh
+- **Total biaya bulanan:** Rp {total_biaya:,.0f}
+- **Estimasi tahunan:** Rp {total_biaya * 12:,.0f}
+
+### 🔍 Alat dengan Konsumsi Tertinggi
+**{alat_tertinggi['nama']}** merupakan alat dengan konsumsi tertinggi:
+- Daya: {alat_tertinggi['daya']} Watt
+- Penggunaan: {alat_tertinggi['jam_per_hari']} jam/hari
+- Konsumsi: {alat_tertinggi['energi']:.2f} kWh/bulan
+- Biaya: Rp {alat_tertinggi['biaya']:,.0f}/bulan
+
+### 💡 Rekomendasi Penghematan
+
+#### 1. Optimalkan Penggunaan {alat_tertinggi['nama']}
+- {'Gunakan timer untuk mengatur jadwal penggunaan' if alat_tertinggi['daya'] > 500 else 'Matikan ketika tidak digunakan'}
+- {'Atur suhu optimal untuk efisiensi' if 'ac' in alat_tertinggi['nama'].lower() else 'Bersihkan secara berkala'}
+
+#### 2. Kebiasaan Hemat Energi
+- Matikan alat elektronik yang tidak digunakan
+- Cabut charger setelah selesai mengisi
+- Gunakan lampu LED hemat energi
+- Manfaatkan pencahayaan alami
+
+#### 3. Pengaturan Waktu Penggunaan
+- Hindari penggunaan alat berdaya tinggi pada jam sibuk (18:00-22:00)
+- Manfaatkan tarif off-peak jika tersedia
+
+### 💰 Estimasi Penghematan
+Dengan menerapkan tips di atas, Anda dapat menghemat **10-30%** dari tagihan listrik:
+- **Penghematan bulanan:** Rp {total_biaya * 0.2:,.0f} - Rp {total_biaya * 0.3:,.0f}
+- **Penghematan tahunan:** Rp {total_biaya * 12 * 0.2:,.0f} - Rp {total_biaya * 12 * 0.3:,.0f}
+
+*Analisis ini dibuat otomatis berdasarkan data konsumsi listrik Anda.*
+"""
+    return analisis
+
 menu = st.sidebar.radio("Menu Navigasi", ["Tambah Data", "Lihat Hasil", "Grafik", "Simpan Data"])
 
 st.sidebar.subheader("Pengaturan Tarif Listrik")
-tarif_baru = st.sidebar.number_input("Tarif Listrik (Rp/kWh)", min_value=500, max_value=5000, 
+tarif_baru = st.sidebar.number_input("Tarif Listrik (Rp/kWh)", min_value=500, max_value=5000,
                                      value=st.session_state.tarif_listrik, step=100)
 if tarif_baru != st.session_state.tarif_listrik:
     st.session_state.tarif_listrik = tarif_baru
@@ -134,100 +180,89 @@ elif menu == "Lihat Hasil":
         
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
 
-        if st.button("Dapatkan Analisis AI"):
-            url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
-            
-            payload = {
-                "total_kwh": total_energi,
-                "total_biaya": total_biaya,
-                "alat_listrik": st.session_state.alat_listrik
-            }
-            
-            # Menambahkan loading indicator
-            with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu sebentar"):
-                try:
-                    # Menggunakan requests.post dengan parameter json langsung
-                    response = requests.post(url, json=payload, timeout=60)
-                    
-                    if response.status_code == 200:
-                        # Langsung ambil sebagai text
-                        hasil_ai = response.text
+        # Bagian AI Analysis - DENGAN FALLBACK MANUAL
+        st.markdown("---")
+        st.subheader("🤖 Analisis Konsumsi Listrik")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🔄 Dapatkan Analisis AI", type="primary", use_container_width=True):
+                url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
+                
+                payload = {
+                    "total_kwh": total_energi,
+                    "total_biaya": total_biaya,
+                    "alat_listrik": st.session_state.alat_listrik
+                }
+                
+                with st.spinner("🔄 Menghubungi AI... Mohon tunggu"):
+                    try:
+                        response = requests.post(url, json=payload, timeout=30)
                         
-                        st.subheader("📊 Analisis AI Konsumsi Listrik")
-                        st.success("✅ Analisis Berhasil!")
-                        
-                        # Fungsi untuk membersihkan dan memformat teks
-                        def format_ai_response(text):
-                            # Handle berbagai format yang mungkin
+                        if response.status_code == 200:
+                            raw_response = response.text
                             
-                            # Jika mengandung pattern role:assistant
-                            if "role:assistant" in text and "content:" in text:
-                                # Ambil bagian setelah "content:"
-                                content_start = text.find("content:") + len("content:")
-                                content = text[content_start:].strip()
-                                # Hapus karakter escape sequence
-                                content = content.replace('\\n', '\n')
-                                return content
+                            # Simpan response untuk debugging
+                            st.session_state.last_ai_response = raw_response
                             
-                            # Jika format JSON-like
-                            elif "{" in text and "}" in text:
-                                try:
-                                    # Coba parse sebagai JSON
-                                    json_data = json.loads(text)
-                                    if "content" in json_data:
-                                        return json_data["content"]
-                                    elif "response" in json_data:
-                                        return json_data["response"]
-                                    elif "message" in json_data:
-                                        return json_data["message"]
+                            # Cek jika response mengandung konten yang meaningful
+                            if len(raw_response.strip()) > 50 and not raw_response.strip().startswith('['):
+                                # Response mungkin valid, coba ekstrak
+                                if 'content:' in raw_response:
+                                    # Ekstrak dari format content:
+                                    content_part = raw_response.split('content:')[1]
+                                    if 'refusal:' in content_part:
+                                        content = content_part.split('refusal:')[0]
                                     else:
-                                        return str(json_data)
-                                except:
-                                    # Jika gagal parse JSON, return as-is
-                                    return text
-                            
-                            # Jika plain text biasa
+                                        content = content_part
+                                    
+                                    content = content.replace('\\n', '\n').strip()
+                                    st.session_state.ai_analysis = content
+                                else:
+                                    # Gunakan langsung
+                                    st.session_state.ai_analysis = raw_response.replace('\\n', '\n')
+                                
+                                st.success("✅ Analisis AI Berhasil!")
                             else:
-                                # Bersihkan teks dari karakter khusus
-                                text = text.replace('\\n', '\n')
-                                text = text.replace('\\"', '"')
-                                return text
+                                st.warning("⚠️ Response AI kosong atau tidak valid")
+                                st.session_state.ai_analysis = generate_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                                st.info("Menggunakan analisis manual sebagai fallback")
                         
-                        # Format dan tampilkan hasil
-                        formatted_result = format_ai_response(hasil_ai)
-                        
-                        # Tampilkan dalam box yang rapi
-                        st.markdown("### 📋 Hasil Analisis AI")
-                        st.markdown("---")
-                        st.markdown(formatted_result)
-                        st.markdown("---")
-                        
-                        # Tampilkan raw response untuk debugging (bisa dihide)
-                        with st.expander("🔧 Raw Response (Debug)"):
-                            st.code(hasil_ai)
+                        else:
+                            st.error(f"❌ Error dari server: {response.status_code}")
+                            st.session_state.ai_analysis = generate_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
                             
-                    else:
-                        st.error(f"❌ Error dari server: {response.status_code}")
-                        st.write("Response:", response.text)
-                        
-                except requests.exceptions.Timeout:
-                    st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
-                except requests.exceptions.ConnectionError:
-                    st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet Anda.")
-                except Exception as e:
-                    st.error(f"❌ Gagal koneksi ke n8n: {e}")
-                    st.write("Detail error:", str(e))
+                    except Exception as e:
+                        st.error(f"❌ Gagal terhubung ke AI: {str(e)}")
+                        st.session_state.ai_analysis = generate_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                        st.info("Menggunakan analisis manual")
+        
+        with col2:
+            if st.button("📊 Analisis Manual", type="secondary", use_container_width=True):
+                st.session_state.ai_analysis = generate_analisis_manual(total_energi, total_biaya, st.session_state.alat_listrik)
+                st.success("✅ Analisis Manual Berhasil!")
 
-        if total_energi > 200:
-            st.subheader("💡 Tips Penghematan Energi")
-            tips = """
-            - Pertimbangkan menggunakan alat dengan daya lebih rendah
-            - Matikan alat elektronik ketika tidak digunakan
-            - Manfaatkan pencahayaan alami di siang hari
-            - Gunakan AC pada suhu 24-25°C untuk efisiensi maksimal
-            - Pertimbangkan menggunakan peralatan hemat energi
-            """
-            st.markdown(tips)
+        # Tampilkan hasil analisis jika ada
+        if 'ai_analysis' in st.session_state:
+            st.markdown("---")
+            st.subheader("📋 Hasil Analisis")
+            
+            # Tampilkan dalam container yang rapi
+            st.markdown(st.session_state.ai_analysis)
+            
+            # Debug info (bisa disembunyikan)
+            with st.expander("🔧 Info Debugging"):
+                if 'last_ai_response' in st.session_state:
+                    st.write("**Last AI Response:**")
+                    st.code(st.session_state.last_ai_response)
+                st.write("**Data yang dikirim:**")
+                st.json({
+                    "total_kwh": total_energi,
+                    "total_biaya": total_biaya,
+                    "jumlah_alat": len(st.session_state.alat_listrik)
+                })
+
     else:
         st.warning("Belum ada data alat listrik. Silakan tambah data terlebih dahulu.")
 
@@ -266,7 +301,6 @@ elif menu == "Simpan Data":
         st.json(st.session_state.alat_listrik, expanded=False)
         
         if st.button("Simpan Data ke File JSON"):
-            # Loading indicator untuk simpan data
             with st.spinner("💾 Menyimpan data..."):
                 if simpan_ke_file():
                     st.success("Data berhasil disimpan ke file 'data_listrik.json'")
@@ -280,7 +314,6 @@ elif menu == "Simpan Data":
     
     st.subheader("Muat Data dari File")
     if st.button("Muat Data dari File JSON"):
-        # Loading indicator untuk muat data
         with st.spinner("📂 Memuat data..."):
             if muat_dari_file():
                 st.success("Data berhasil dimuat dari file 'data_listrik.json'")
