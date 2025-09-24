@@ -151,7 +151,7 @@ elif menu == "Lihat Hasil":
                     hasil_ai = response.json()
                     
                     st.subheader("📊 Analisis AI Konsumsi Listrik")
-                    st.json(hasil_ai)
+                    st.write(hasil_ai)
                 else:
                     st.error(f"Webhook error: {response.status_code} - {response.text}")
             except Exception as e:
@@ -225,5 +225,6 @@ elif menu == "Simpan Data":
 
 st.sidebar.markdown("---")
 st.sidebar.info("Aplikasi Penghitung Konsumsi Listrik Rumah Tangga")
+
 
 
