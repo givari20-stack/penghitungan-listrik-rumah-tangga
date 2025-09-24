@@ -135,7 +135,7 @@ elif menu == "Lihat Hasil":
         st.info(f"Estimasi biaya tahunan: Rp {total_biaya * 12:,.0f}")
 
         if st.button("Dapatkan Analisis AI"):
-            url = "https://givari20.app.n8n.cloud/webhook-test/ai-listrik"
+            url = "https://givari20.app.n8n.cloud/webhook/ai-listrik"
             
             payload = {
                 "total_kwh": total_energi,
@@ -225,4 +225,5 @@ elif menu == "Simpan Data":
 
 st.sidebar.markdown("---")
 st.sidebar.info("Aplikasi Penghitung Konsumsi Listrik Rumah Tangga")
+
 
