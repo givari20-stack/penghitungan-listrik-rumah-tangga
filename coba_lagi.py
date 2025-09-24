@@ -147,31 +147,53 @@ elif menu == "Lihat Hasil":
             with st.spinner("🔄 Sedang menganalisis data dengan AI... Mohon tunggu sebentar"):
                 try:
                     # Menggunakan requests.post dengan parameter json langsung
-                    response = requests.post(url, json=payload, timeout=30)
+                    response = requests.post(url, json=payload, timeout=60)
                     
                     if response.status_code == 200:
-                        # Menggunakan response.text() bukan response.json()
+                        # Langsung ambil sebagai text tanpa parsing JSON
                         hasil_ai = response.text
                         
                         st.subheader("📊 Analisis AI Konsumsi Listrik")
                         
-                        # Coba parsing sebagai JSON, jika gagal tampilkan sebagai teks biasa
-                        try:
-                            hasil_json = json.loads(hasil_ai)
-                            st.json(hasil_json)
-                        except json.JSONDecodeError:
-                            # Jika bukan JSON, tampilkan sebagai teks biasa
-                            st.write("**Hasil Analisis:**")
+                        # Debug: Tampilkan raw response untuk troubleshooting
+                        st.write("**Raw Response:**")
+                        st.code(hasil_ai)
+                        
+                        # Cek jika response mengandung konten yang diharapkan
+                        if "role:assistant" in hasil_ai or "rekomendasi" in hasil_ai.lower():
+                            # Ekstrak hanya bagian content dari response
+                            if "content:" in hasil_ai:
+                                # Ambil bagian setelah "content:"
+                                content_start = hasil_ai.find("content:") + len("content:")
+                                content = hasil_ai[content_start:].strip()
+                                
+                                # Hapus karakter escape sequence jika ada
+                                content = content.replace('\\n', '\n')
+                                
+                                # Tampilkan dengan format yang rapi
+                                st.success("✅ Analisis Berhasil!")
+                                st.markdown("### 📋 Hasil Analisis:")
+                                st.markdown(content)
+                            else:
+                                # Jika format tidak sesuai, tampilkan langsung
+                                st.markdown("### 📋 Hasil Analisis:")
+                                st.write(hasil_ai)
+                        else:
+                            # Tampilkan response apa adanya
+                            st.markdown("### 📋 Hasil Analisis:")
                             st.write(hasil_ai)
                             
                     else:
-                        st.error(f"Webhook error: {response.status_code} - {response.text}")
+                        st.error(f"❌ Error dari server: {response.status_code}")
+                        st.write("Response:", response.text)
+                        
                 except requests.exceptions.Timeout:
                     st.error("⏰ Waktu permintaan habis. Silakan coba lagi.")
                 except requests.exceptions.ConnectionError:
                     st.error("🔌 Gagal terhubung ke server. Periksa koneksi internet Anda.")
                 except Exception as e:
                     st.error(f"❌ Gagal koneksi ke n8n: {e}")
+                    st.write("Detail error:", str(e))
 
         if total_energi > 200:
             st.subheader("💡 Tips Penghematan Energi")
