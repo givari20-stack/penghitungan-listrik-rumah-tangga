@@ -58,6 +58,22 @@ st.markdown("""
         border-bottom: 2px solid #1f77b4;
         padding-bottom: 0.5rem;
     }
+    .credit-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    .developer-card {
+        background: white;
+        color: #333;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -121,16 +137,13 @@ with st.sidebar:
         st.success("Data reset!")
     
     st.markdown("---")
-    st.info("""
-    **Smart Energy Monitor**
-    
-    Aplikasi monitoring konsumsi energi rumah tangga dengan analisis real-time.
-    
-    **Fitur:**
-    • Monitoring perangkat
-    • Sensor real-time  
-    • Analisis biaya
-    • Visualisasi data
+    st.markdown("""
+    **👨‍💻 Developers:**
+    - **Muhammad Givari Ramadhan Kagira**
+      - NIM: 241734018
+      
+    - **Hanif Nur Hakim**
+      - NIM: 241734008
     """)
 
 # ==================== HEADER ====================
@@ -139,8 +152,28 @@ with col2:
     st.markdown('<h1 class="main-header">⚡ SMART ENERGY MONITOR</h1>', unsafe_allow_html=True)
     st.markdown("**Sistem Monitoring Konsumsi Energi Rumah Tangga**")
 
+# ==================== DEVELOPER CREDIT SECTION ====================
+st.markdown("""
+<div class="credit-section">
+    <h2>🎓 Project Smart Energy Monitor</h2>
+    <p><strong>Dibuat oleh Mahasiswa Teknik Elektro</strong></p>
+    <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;">
+        <div class="developer-card">
+            <h3>Muhammad Givari Ramadhan Kagira</h3>
+            <p><strong>NIM:</strong> 241734018</p>
+            <p>Full Stack Developer & IoT Specialist</p>
+        </div>
+        <div class="developer-card">
+            <h3>Hanif Nur Hakim</h3>
+            <p><strong>NIM:</strong> 241734008</p>
+            <p>Hardware Engineer & System Integrator</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # ==================== DASHBOARD UTAMA ====================
-tab1, tab2, tab3, tab4 = st.tabs(["🏠 Dashboard", "📊 Perangkat", "📈 Analytics", "🔧 Tambah Data"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏠 Dashboard", "📊 Perangkat", "📈 Analytics", "🔧 Tambah Data", "📡 ESP32 Connection"])
 
 with tab1:
     # ==================== KPI CARDS ====================
@@ -405,16 +438,212 @@ with tab4:
                     st.success("Perangkat dihapus!")
                     st.rerun()
 
-# ==================== FOOTER ====================
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
+with tab5:
+    st.markdown('<div class="section-title">📡 Koneksi ESP32 Smart Sensor</div>', unsafe_allow_html=True)
+    
+    # Status Connection Section
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.markdown("### 🔗 Status Koneksi")
+        
+        # Connection Status Card
+        connection_status = st.selectbox(
+            "Status Sensor",
+            ["🟢 Terhubung", "🟡 Menghubungkan...", "🔴 Terputus"],
+            index=0
+        )
+        
+        if connection_status == "🟢 Terhubung":
+            st.success("✅ ESP32 berhasil terhubung!")
+            st.balloons()
+        elif connection_status == "🟡 Menghubungkan...":
+            st.warning("🔄 Menghubungkan ke ESP32...")
+        else:
+            st.error("❌ ESP32 terputus")
+    
+    with col2:
+        st.markdown("### ⚙️ Aksi Cepat")
+        if st.button("🔄 Refresh Connection", use_container_width=True):
+            st.success("Koneksi diperbarui!")
+        
+        if st.button("📡 Scan Devices", use_container_width=True):
+            st.info("Memindai perangkat ESP32...")
+    
+    # Real-time Data Display
+    st.markdown("### 📊 Data Real-time dari ESP32")
+    
+    # Simulasi data sensor dari ESP32
+    if st.session_state.sensor_data:
+        latest_data = st.session_state.sensor_data[-1]
+        
+        # Sensor Cards in Grid
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div class="sensor-card">
+                <h3>⚡ Tegangan</h3>
+                <h2>{latest_data['voltage']} V</h2>
+                <p>AC Power</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="energy-card">
+                <h3>🔌 Arus</h3>
+                <h2>{latest_data['current']} A</h2>
+                <p>Consumption</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div class="cost-card">
+                <h3>💡 Daya</h3>
+                <h2>{latest_data['power']} W</h2>
+                <p>Real-time</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3>🌡️ Suhu</h3>
+                <h2>{latest_data['temp']}°C</h2>
+                <p>Ruangan</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Developer Credit in ESP32 Section
+    st.markdown("---")
     st.markdown("""
-    <div style='text-align: center; color: #666;'>
-        <p><strong>⚡ Smart Energy Monitor</strong> - Sistem Monitoring Konsumsi Energi Rumah Tangga</p>
-        <p>Dibuat untuk Presentasi Akademik • © 2024</p>
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 15px; text-align: center;">
+        <h3>🔧 Sistem IoT oleh:</h3>
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem;">
+            <div style="background: white; color: #333; padding: 1rem; border-radius: 10px; min-width: 200px;">
+                <h4>Muhammad Givari R. K.</h4>
+                <p><strong>NIM:</strong> 241734018</p>
+                <p>Software & IoT Developer</p>
+            </div>
+            <div style="background: white; color: #333; padding: 1rem; border-radius: 10px; min-width: 200px;">
+                <h4>Hanif Nur Hakim</h4>
+                <p><strong>NIM:</strong> 241734008</p>
+                <p>Hardware & System Engineer</p>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Connection Guide
+    st.markdown("---")
+    st.markdown("### 🔧 Panduan Koneksi ESP32")
+    
+    guide_col1, guide_col2 = st.columns(2)
+    
+    with guide_col1:
+        st.markdown("""
+        #### 📋 Langkah-langkah Koneksi:
+        
+        1. **Power ON ESP32** 
+           - Pastikan ESP32 sudah terhubung ke power
+           - LED indicator harus menyala
+        
+        2. **Koneksi WiFi**
+           - ESP32 otomatis connect ke WiFi
+           - Status: `🟢 Connected`
+        
+        3. **Data Streaming**
+           - Sensor mulai mengirim data
+           - Update setiap 2 detik
+        
+        4. **Monitoring**
+           - Data real-time muncul di dashboard
+           - Grafik update otomatis
+        """)
+    
+    with guide_col2:
+        st.markdown("""
+        #### 🔌 Spesifikasi Teknis:
+        
+        **📊 Sensor yang Terpasang:**
+        - 🔋 INA219 - Voltage & Current
+        - 🌡️ DHT22 - Temperature & Humidity  
+        - 💡 LDR - Light Intensity
+        - 🔌 Relay - Device Control
+        
+        **📶 Komunikasi:**
+        - Protocol: HTTP REST API
+        - Interval: 2 detik
+        - Format: JSON
+        
+        **🛠️ Konfigurasi:**
+        - SSID: `SmartHome_WIFI`
+        - Password: `smarthome123`
+        """)
+    
+    # Data Log Section
+    st.markdown("---")
+    st.markdown("### 📝 Data Log ESP32")
+    
+    if st.session_state.sensor_data:
+        # Tampilkan data terakhir dalam tabel
+        log_data = []
+        for data in st.session_state.sensor_data[-5:]:  # Show last 5 entries
+            log_data.append({
+                "Timestamp": data["timestamp"],
+                "Voltage": f"{data['voltage']} V",
+                "Current": f"{data['current']} A", 
+                "Power": f"{data['power']} W",
+                "Energy": f"{data['energy']:.3f} kWh",
+                "Temperature": f"{data['temp']}°C"
+            })
+        
+        df_log = pd.DataFrame(log_data)
+        st.dataframe(df_log, use_container_width=True, hide_index=True)
+        
+        # Download data option
+        csv_data = pd.DataFrame(st.session_state.sensor_data).to_csv(index=False)
+        st.download_button(
+            label="📥 Download Data Log",
+            data=csv_data,
+            file_name="esp32_sensor_data.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+    else:
+        st.info("""
+        ## 📡 Menunggu Koneksi ESP32...
+        
+        **Data sensor akan muncul di sini setelah ESP32 terhubung:**
+        - Tegangan (Voltage)
+        - Arus (Current) 
+        - Daya (Power)
+        - Energi (Energy)
+        - Suhu (Temperature)
+        - Kelembapan (Humidity)
+        """)
+
+# ==================== FOOTER DENGAN CREDIT ====================
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #666; padding: 2rem;'>
+    <h3>🎓 Project Smart Energy Monitor</h3>
+    <p><strong>Dibuat oleh Mahasiswa Teknik Elektro</strong></p>
+    <div style="display: flex; justify-content: center; gap: 3rem; margin: 1rem 0;">
+        <div>
+            <h4>Muhammad Givari Ramadhan Kagira</h4>
+            <p>NIM: 241734018</p>
+        </div>
+        <div>
+            <h4>Hanif Nur Hakim</h4>
+            <p>NIM: 241734008</p>
+        </div>
+    </div>
+    <p><em>⚡ Sistem Monitoring Konsumsi Energi Rumah Tangga dengan IoT • © 2024</em></p>
+</div>
+""", unsafe_allow_html=True)
 
 # ==================== AUTO-LOAD SAMPLE DATA ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
