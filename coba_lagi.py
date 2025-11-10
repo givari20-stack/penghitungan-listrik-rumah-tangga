@@ -641,10 +641,11 @@ st.markdown("""
             <p>NIM: 241734008</p>
         </div>
     </div>
-    <p><em>⚡ Sistem Monitoring Konsumsi Energi Rumah Tangga dengan IoT • © 2024</em></p>
+    <p><em>⚡ Sistem Monitoring Konsumsi Energi Rumah Tangga dengan IoT untuk memenuhi tugas Dasar Pemerograman • © 2025</em></p>
 </div>
 """, unsafe_allow_html=True)
 
 # ==================== AUTO-LOAD SAMPLE DATA ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
+
