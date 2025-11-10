@@ -156,7 +156,7 @@ with col2:
 st.markdown("""
 <div class="credit-section">
     <h2>🎓 Project Smart Energy Monitor</h2>
-    <p><strong>Dibuat oleh Mahasiswa Teknik Elektro</strong></p>
+    <p><strong>Dibuat oleh Mahasiswa D4-Teknik Konservasi Energi </strong></p>
     <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;">
         <div class="developer-card">
             <h3>Muhammad Givari Ramadhan Kagira</h3>
@@ -630,7 +630,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 2rem;'>
     <h3>🎓 Project Smart Energy Monitor</h3>
-    <p><strong>Dibuat oleh Mahasiswa Teknik Elektro</strong></p>
+    <p><strong>Dibuat oleh Mahasiswa D4-Teknik Konservasi Energi </strong></p>
     <div style="display: flex; justify-content: center; gap: 3rem; margin: 1rem 0;">
         <div>
             <h4>Muhammad Givari Ramadhan Kagira</h4>
