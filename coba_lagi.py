@@ -24,6 +24,9 @@ st.set_page_config(
 # ==================== FOOTER ====================
 st.markdown("---")
 
+# ==================== FOOTER ====================
+st.markdown("---")
+
 # Footer Header
 st.markdown(
     """
@@ -58,6 +61,43 @@ with col1:
         """, 
         unsafe_allow_html=True
     )
+
+with col2:
+    st.markdown(
+        """
+        <div class='developer-card'>
+            <h3>Hanif Nur Hakim</h3>
+            <p class='nim'><strong>NIM:</strong> 241734008</p>
+            <p class='role'>Hardware Engineer & System Integrator</p>
+            <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
+# Additional Info
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 1.5rem; 
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
+        border-radius: 15px; 
+        border: 2px solid #8a2be2;
+        margin-top: 1rem;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
+    '>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
+        
+        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</p>
+        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</p>
+        <p style="margin-top: 1rem; font-size: 0.8em; color: #c084fc;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 with col2:
     st.markdown(
@@ -1172,89 +1212,432 @@ with tab7:
         Pastikan ESP32 sudah terhubung dan mengirim data.
         """)
 
-# ==================== FOOTER ====================
-st.markdown("---")
+# ==================== CSS CUSTOM ====================
+st.markdown("""
+<style>
+    /* ===== GLOBAL STYLES ===== */
+    .main {
+        background-color: #0f0f23;
+    }
+    
+    .stApp {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+    }
+    
+    /* ===== HEADER STYLES ===== */
+    .main-header {
+        font-size: 3rem;
+        color: #8a2be2 !important;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-weight: 900;
+        text-shadow: 0 4px 8px rgba(138, 43, 226, 0.4);
+        letter-spacing: 2px;
+        background: none !important;
+        -webkit-text-fill-color: #8a2be2 !important;
+    }
+    
+    /* ===== TAB STYLES ===== */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        padding: 20px;
+        border-radius: 25px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(138, 43, 226, 0.3);
+        border: 2px solid #8a2be2;
+    }
 
-# Footer dengan styling yang benar
-st.markdown(
-    """
-    <div style='
-        text-align: center; 
-        padding: 2rem; 
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-        border-radius: 15px; 
-        color: white;
-        margin-top: 2rem;
-    '>
-        <h2>🎓 Smart Energy Monitor </h2>
-        <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+    .stTabs [data-baseweb="tab"] {
+        padding: 16px 32px;
+        background-color: #2d2b55 !important;
+        border-radius: 15px;
+        font-weight: 800;
+        color: #d8c3ff !important;
+        border: 2px solid #8a2be2;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
 
-# Developer Cards menggunakan columns
-col1, col2 = st.columns(2)
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #3d3a75 !important;
+        border-color: #a855f7;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+    }
 
-with col1:
-    st.markdown(
-        """
-        <div style='
-            background: white; 
-            color: #333; 
-            padding: 1.5rem; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 1rem 0;
-        '>
-            <h3 style="color: #667eea; margin-bottom: 0.5rem;">Muhammad Givari Ramadhan Kagira</h3>
-            <p style="font-size: 1.1em; margin: 0.5rem 0;"><strong>NIM:</strong> 241734018</p>
-            <p style="margin: 0;">Full Stack Developer & IoT Specialist</p>
-            <p style="font-size: 0.9em; color: #666;">Software Architecture, Frontend, Backend, IoT Integration</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    .stTabs [aria-selected="true"] {
+        background-color: #8a2be2 !important;
+        color: #ffffff !important;
+        border-color: #8a2be2;
+        box-shadow: 0 8px 25px rgba(138, 43, 226, 0.6);
+        transform: translateY(-2px);
+    }
 
-with col2:
-    st.markdown(
-        """
-        <div style='
-            background: white; 
-            color: #333; 
-            padding: 1.5rem; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 1rem 0;
-        '>
-            <h3 style="color: #764ba2; margin-bottom: 0.5rem;">Hanif Nur Hakim</h3>
-            <p style="font-size: 1.1em; margin: 0.5rem 0;"><strong>NIM:</strong> 241734008</p>
-            <p style="margin: 0;">Hardware Engineer & System Integrator</p>
-            <p style="font-size: 0.9em; color: #666;">ESP32 Development, Sensor Integration, Circuit Design</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: transparent !important;
+    }
 
-# Info tambahan
-st.markdown(
-    """
-    <div style='
-        text-align: center; 
-        padding: 1.5rem; 
-        background: rgba(255,255,255,0.1); 
-        border-radius: 10px; 
-        color: white;
-        margin-top: 1rem;
-    '>
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
-        <p style="font-size: 1em; margin-bottom: 1rem;"><strong>📅 Tahun:</strong> 2025</p>
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 0px;
+    }
+    
+    /* ===== CARD STYLES ===== */
+    .metric-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        padding: 2rem;
+        border-radius: 20px;
+        border: 2px solid #8a2be2;
+        box-shadow: 0 8px 32px rgba(138, 43, 226, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(138, 43, 226, 0.25);
+        border-color: #a855f7;
+    }
+
+    .sensor-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        color: #d8c3ff;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(138, 43, 226, 0.2);
+        border: 2px solid #8a2be2;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sensor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #8a2be2 0%, #a855f7 100%);
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(138, 43, 226, 0.3);
+        border-color: #a855f7;
+    }
+
+    .energy-card {
+        background: linear-gradient(135deg, #2e1a3a 0%, #552b55 100%);
+        color: #d8c3ff;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(168, 85, 247, 0.2);
+        border: 2px solid #a855f7;
+        transition: all 0.3s ease;
+    }
+    
+    .energy-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(168, 85, 247, 0.3);
+        border-color: #c084fc;
+    }
+
+    .cost-card {
+        background: linear-gradient(135deg, #1a2e3a 0%, #2b5555 100%);
+        color: #c3f0ff;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
+        border: 2px solid #3b82f6;
+        transition: all 0.3s ease;
+    }
+    
+    .cost-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3);
+        border-color: #60a5fa;
+    }
+
+    .success-card {
+        background: linear-gradient(135deg, #1a3a2e 0%, #2b5546 100%);
+        color: #c3ffd8;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(34, 197, 94, 0.2);
+        border: 2px solid #22c55e;
+        transition: all 0.3s ease;
+    }
+    
+    .success-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(34, 197, 94, 0.3);
+        border-color: #4ade80;
+    }
+
+    /* ===== SECTION STYLES ===== */
+    .section-title {
+        font-size: 2.2rem;
+        color: #8a2be2 !important;
+        margin: 2.5rem 0 1.5rem 0;
+        border-bottom: 3px solid #8a2be2;
+        padding-bottom: 0.8rem;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: 1px;
+        background: none !important;
+        -webkit-text-fill-color: #8a2be2 !important;
+        text-shadow: 0 2px 4px rgba(138, 43, 226, 0.3);
+    }
+
+    /* ===== FOOTER DEVELOPER CARD STYLES ===== */
+    .developer-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%) !important;
+        color: #d8c3ff !important;
+        padding: 2rem !important;
+        border-radius: 20px !important;
+        border: 3px solid #8a2be2 !important;
+        box-shadow: 0 10px 35px rgba(138, 43, 226, 0.3) !important;
+        transition: all 0.3s ease !important;
+        margin: 1rem 0 !important;
+    }
+    
+    .developer-card:hover {
+        transform: translateY(-8px) !important;
+        box-shadow: 0 15px 45px rgba(138, 43, 226, 0.5) !important;
+        border-color: #a855f7 !important;
+    }
+    
+    .developer-card h3 {
+        color: #8a2be2 !important;
+        font-weight: 900 !important;
+        font-size: 1.4rem !important;
+        margin-bottom: 0.5rem !important;
+        text-shadow: 0 2px 4px rgba(138, 43, 226, 0.3) !important;
+    }
+    
+    .developer-card p {
+        color: #d8c3ff !important;
+        font-weight: 600 !important;
+        margin: 0.3rem 0 !important;
+    }
+    
+    .developer-card .nim {
+        color: #a855f7 !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    .developer-card .role {
+        color: #c084fc !important;
+        font-weight: 700 !important;
+        font-style: italic !important;
+    }
+    
+    .developer-card .skills {
+        color: #d8c3ff !important;
+        font-size: 0.9rem !important;
+        opacity: 0.9 !important;
+    }
+
+    /* ===== ALERT STYLES ===== */
+    .alert-box {
+        background: linear-gradient(135deg, #2e2a3a 0%, #554b55 100%);
+        border-left: 6px solid #a855f7;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.2);
+        border: 1px solid #a855f7;
+        color: #d8c3ff;
+    }
+    
+    .stAlert {
+        border-radius: 15px;
+        padding: 1.2rem 1.8rem;
+        border: 2px solid;
+        color: #d8c3ff !important;
+    }
+
+    /* ===== COMPARISON CARD STYLES ===== */
+    .comparison-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 2px solid #8a2be2;
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.1);
+        transition: all 0.3s ease;
+        color: #d8c3ff;
+    }
+    
+    .comparison-card:hover {
+        border-color: #a855f7;
+        box-shadow: 0 8px 25px rgba(168, 85, 247, 0.2);
+        transform: translateX(5px);
+    }
+
+    /* ===== BUTTON STYLES ===== */
+    .stButton button {
+        background: linear-gradient(135deg, #2d2b55 0%, #3d3a75 100%);
+        color: #d8c3ff !important;
+        border: 2px solid #8a2be2;
+        padding: 0.8rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(138, 43, 226, 0.2);
+    }
+    
+    .stButton button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+        border-color: #a855f7;
+        background: linear-gradient(135deg, #3d3a75 0%, #2d2b55 100%);
+    }
+    
+    .stButton button:active {
+        transform: translateY(0);
+    }
+
+    /* ===== SIDEBAR STYLES ===== */
+    .css-1d391kg {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        border-right: 2px solid #8a2be2;
+    }
+    
+    .css-1lcbmhc {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        border-right: 2px solid #8a2be2;
+    }
+
+    /* ===== PROGRESS BAR STYLES ===== */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(135deg, #8a2be2 0%, #a855f7 100%);
+        border-radius: 10px;
+        border: 1px solid #a855f7;
+    }
+
+    /* ===== METRIC STYLES ===== */
+    [data-testid="stMetricValue"] {
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+        color: #8a2be2 !important;
+        text-shadow: 0 2px 4px rgba(138, 43, 226, 0.3);
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-weight: 700 !important;
+        color: #d8c3ff !important;
+        font-size: 1rem !important;
+    }
+    
+    [data-testid="stMetricDelta"] {
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+
+    /* ===== DATA FRAME STYLES ===== */
+    .dataframe {
+        border-radius: 15px !important;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.1) !important;
+        border: 2px solid #8a2be2 !important;
+        background-color: #1a1a2e !important;
+    }
+    
+    .dataframe thead th {
+        background: linear-gradient(135deg, #2d2b55 0%, #3d3a75 100%) !important;
+        color: #d8c3ff !important;
+        font-weight: 800 !important;
+        border: 1px solid #8a2be2 !important;
+        font-size: 1rem !important;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background-color: #1a1a2e !important;
+    }
+    
+    .dataframe tbody tr:nth-child(odd) {
+        background-color: #0f0f23 !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background-color: #2d2b55 !important;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .dataframe tbody td {
+        color: #d8c3ff !important;
+        border: 1px solid #2d2b55 !important;
+        font-weight: 600 !important;
+    }
+
+    /* ===== TEXT COLOR OVERRIDES ===== */
+    .stMarkdown {
+        color: #d8c3ff !important;
+    }
+    
+    p, div, span, label {
+        color: #d8c3ff !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #d8c3ff !important;
+    }
+    
+    /* Tab text color fix */
+    .stTabs [data-baseweb="tab"] * {
+        color: inherit !important;
+    }
+
+    /* ===== CUSTOM SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1a1a2e;
+        border-radius: 8px;
+        border: 1px solid #8a2be2;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #8a2be2 0%, #a855f7 100%);
+        border-radius: 8px;
+        border: 1px solid #a855f7;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #a855f7 0%, #8a2be2 100%);
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 2.2rem;
+        }
         
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+        .section-title {
+            font-size: 1.8rem;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            padding: 12px 20px;
+            font-size: 0.9rem;
+        }
+        
+        .metric-card, .sensor-card, .energy-card, .cost-card, .success-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
