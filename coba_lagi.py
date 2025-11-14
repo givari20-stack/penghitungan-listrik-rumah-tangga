@@ -442,23 +442,23 @@ with col4:
                      f"{total_energy - st.session_state.energy_target:.0f} kWh")
 
     # Charts Row
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("#### 📈 Konsumsi Energi per Device")
-        if st.session_state.devices:
-            # Plotly bar chart
-            df_devices = pd.DataFrame(st.session_state.devices)
-            fig = px.bar(df_devices,
-                        x='name',
-                        y='energy',
-                        color='energy',
-                        color_continuous_scale='Viridis',
-                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                        title='')
-            fig.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+    
+        with col1:
+            st.markdown("#### 📈 Konsumsi Energi per Device")
+            if st.session_state.devices:
+                # Plotly bar chart
+                df_devices = pd.DataFrame(st.session_state.devices)
+                fig = px.bar(df_devices,
+                            x='name',
+                            y='energy',
+                            color='energy',
+                            color_continuous_scale='Viridis',
+                            labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
+                            title='')
+                fig.update_layout(height=350, showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
     with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
         if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
@@ -1221,5 +1221,6 @@ st.markdown("""
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
+
 
 
