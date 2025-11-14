@@ -1213,10 +1213,12 @@ st.markdown("""
 
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
-    load_sample_data()400, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("📝 Tambahkan perangkat untuk melihat grafik")
+    load_sample_data()
+    
+    # Kemudian buat plot (asumsi ini adalah kelanjutan yang benar)
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    # kode untuk else condition
     
     with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
@@ -1413,3 +1415,4 @@ with tab3:
                         color='Cost/Hour',
                         color_continuous_scale='Reds')
             fig.update_layout(height=
+
