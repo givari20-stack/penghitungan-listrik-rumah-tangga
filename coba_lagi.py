@@ -344,7 +344,7 @@ with st.sidebar:
 
 # ==================== HEADER ====================
 col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+with col2:
     st.markdown('<h1 class="main-header">⚡ SMART ENERGY MONITOR PRO</h1>', unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em;'><strong>Sistem Monitoring & Optimasi Konsumsi Energi Pintar</strong></p>", unsafe_allow_html=True)
 
@@ -421,6 +421,7 @@ with tab1:
             <p>{current_voltage} V • {current_current:.1f} A</p>
         </div>
         """, unsafe_allow_html=True)
+
     with col4:
         st.markdown(f"""
         <div class="success-card">
@@ -429,36 +430,38 @@ with tab1:
             <p>CO₂ per bulan</p>
         </div>
         """, unsafe_allow_html=True)
+
     # Progress to Target
-        st.markdown("---")
-        progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
-    
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("### 🎯 Progress ke Target Bulanan")
-            st.progress(progress_pct / 100)
-        with col2:
-            st.metric("Target Status", f"{progress_pct:.0f}%",
-                     f"{total_energy - st.session_state.energy_target:.0f} kWh")
+    st.markdown("---")
+    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown("### 🎯 Progress ke Target Bulanan")
+        st.progress(progress_pct / 100)
+    with col2:
+        st.metric("Target Status", f"{progress_pct:.0f}%",
+                 f"{total_energy - st.session_state.energy_target:.0f} kWh")
 
     # Charts Row
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-    
-        with col1:
-            st.markdown("#### 📈 Konsumsi Energi per Device")
-            if st.session_state.devices:
-                # Plotly bar chart
-                df_devices = pd.DataFrame(st.session_state.devices)
-                fig = px.bar(df_devices,
-                            x='name',
-                            y='energy',
-                            color='energy',
-                            color_continuous_scale='Viridis',
-                            labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                            title='')
-                fig.update_layout(height=350, showlegend=False)
-                st.plotly_chart(fig, use_container_width=True)
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### 📈 Konsumsi Energi per Device")
+        if st.session_state.devices:
+            # Plotly bar chart
+            df_devices = pd.DataFrame(st.session_state.devices)
+            fig = px.bar(df_devices,
+                        x='name',
+                        y='energy',
+                        color='energy',
+                        color_continuous_scale='Viridis',
+                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
+                        title='')
+            fig.update_layout(height=350, showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+
     with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
         if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
@@ -517,6 +520,7 @@ with tab1:
         potential_savings = total_cost * 0.20
         st.success(f"Rp {potential_savings:,.0f}/bulan")
         st.caption("Dengan optimasi jadwal penggunaan")
+
 with tab4:
     # ==================== OPTIMIZATION ====================
     st.markdown('<div class="section-title">🎯 Rekomendasi Optimasi Energi</div>', unsafe_allow_html=True)
@@ -666,7 +670,8 @@ with tab5:
             max_energy = df_hist['energy'].max()
             max_month = df_hist.loc[df_hist['energy'].idxmax(), 'month']
             st.metric("Peak Consumption", f"{max_energy:.0f} kWh", max_month)
-    with col4:
+
+        with col4:
             min_energy = df_hist['energy'].min()
             min_month = df_hist.loc[df_hist['energy'].idxmin(), 'month']
             st.metric("Lowest Consumption", f"{min_energy:.0f} kWh", min_month)
@@ -910,7 +915,8 @@ with tab7:
                 <p>Power Usage</p>
             </div>
             """, unsafe_allow_html=True)
-    with col4:
+
+        with col4:
             st.markdown(f"""
             <div class="success-card">
                 <h3>🌡️ Suhu</h3>
@@ -1221,6 +1227,3 @@ st.markdown("""
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
-
-
-
