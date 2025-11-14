@@ -1,10 +1,17 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime, timedelta
 import numpy as np
+
+# Try to import plotly, if not available use matplotlib
+try:
+    import plotly.graph_objects as go
+    import plotly.express as px
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    st.warning("⚠️ Plotly tidak terinstall. Menggunakan matplotlib sebagai alternatif.")
 
 # ==================== KONFIGURASI ====================
 st.set_page_config(
@@ -192,6 +199,42 @@ def generate_recommendations():
 
     return recommendations
 
+def create_bar_chart_matplotlib(data, title, x_label, y_label):
+    """Create bar chart using matplotlib"""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(data['name'], data['energy'], 
+                 color=plt.cm.viridis(np.linspace(0, 1, len(data))))
+    
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
+    ax.tick_params(axis='x', rotation=45)
+    ax.grid(axis='y', alpha=0.3)
+    
+    # Tambahkan nilai di atas bar
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+               f'{height:.1f}', ha='center', va='bottom')
+    
+    plt.tight_layout()
+    return fig
+
+def create_line_chart_matplotlib(data, x_col, y_col, title, x_label, y_label, color='#FF6B6B'):
+    """Create line chart using matplotlib"""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(data[x_col], data[y_col], 
+           color=color, linewidth=3, marker='o')
+    
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
+    ax.tick_params(axis='x', rotation=45)
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    return fig
+
 def load_sample_data():
     """Data sample yang lebih komprehensif"""
     sample_devices = [
@@ -364,7 +407,7 @@ if st.session_state.alerts:
 # ==================== TABS ====================
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🏠 Dashboard",
-    "📊 Devices",
+    "📊 Devices", 
     "📈 Analytics",
     "🎯 Optimization",
     "📅 Historical",
@@ -450,31 +493,55 @@ with tab1:
     with col1:
         st.markdown("#### 📈 Konsumsi Energi per Device")
         if st.session_state.devices:
-            # Plotly bar chart
             df_devices = pd.DataFrame(st.session_state.devices)
-            fig = px.bar(df_devices,
-                        x='name',
-                        y='energy',
-                        color='energy',
-                        color_continuous_scale='Viridis',
-                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                        title='')
-            fig.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            
+            if PLOTLY_AVAILABLE:
+                # Gunakan Plotly jika tersedia
+                fig = px.bar(df_devices,
+                            x='name',
+                            y='energy',
+                            color='energy',
+                            color_continuous_scale='Viridis',
+                            labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'})
+                fig.update_layout(height=350, showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                # Fallback ke matplotlib
+                fig = create_bar_chart_matplotlib(
+                    df_devices, 
+                    'Konsumsi Energi per Device',
+                    'Perangkat', 
+                    'Energi (kWh)'
+                )
+                st.pyplot(fig)
 
     with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
         if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
             df_sensor = pd.DataFrame(st.session_state.sensor_data[-20:])  # Last 20 readings
-            fig = px.line(df_sensor,
-                         x='timestamp',
-                         y='power',
-                         markers=True,
-                         labels={'power': 'Daya (W)', 'timestamp': 'Waktu'},
-                         title='')
-            fig.update_traces(line_color='#FF6B6B', line_width=3)
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
+            
+            if PLOTLY_AVAILABLE:
+                # Gunakan Plotly jika tersedia
+                fig = px.line(df_sensor,
+                             x='timestamp',
+                             y='power',
+                             markers=True,
+                             labels={'power': 'Daya (W)', 'timestamp': 'Waktu'})
+                fig.update_traces(line_color='#FF6B6B', line_width=3)
+                fig.update_layout(height=400)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                # Fallback ke matplotlib
+                fig = create_line_chart_matplotlib(
+                    df_sensor,
+                    'timestamp',
+                    'power',
+                    'Real-time Power Consumption',
+                    'Waktu',
+                    'Daya (W)',
+                    color='#FF6B6B'
+                )
+                st.pyplot(fig)
         else:
             st.info("📡 Waiting for sensor data...")
 
@@ -520,6 +587,110 @@ with tab1:
         potential_savings = total_cost * 0.20
         st.success(f"Rp {potential_savings:,.0f}/bulan")
         st.caption("Dengan optimasi jadwal penggunaan")
+
+with tab2:
+    # ==================== DEVICES ====================
+    st.markdown('<div class="section-title">📊 Detail Perangkat Elektronik</div>', unsafe_allow_html=True)
+    
+    if st.session_state.devices:
+        # Summary statistics
+        total_devices = len(st.session_state.devices)
+        total_power = sum(device["power"] for device in st.session_state.devices)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Perangkat", total_devices)
+        with col2:
+            st.metric("Total Daya", f"{total_power} W")
+        with col3:
+            st.metric("Energi Total", f"{total_energy:.1f} kWh")
+        with col4:
+            st.metric("Biaya Total", f"Rp {total_cost:,.0f}")
+        
+        # Device table
+        st.markdown("### 📋 Daftar Perangkat")
+        df_devices = pd.DataFrame(st.session_state.devices)
+        st.dataframe(df_devices, use_container_width=True)
+        
+        # Device categories
+        st.markdown("### 🗂️ Kategori Perangkat")
+        if 'category' in df_devices.columns:
+            category_summary = df_devices.groupby('category').agg({
+                'energy': 'sum',
+                'cost': 'sum',
+                'name': 'count'
+            }).rename(columns={'name': 'jumlah'})
+            st.dataframe(category_summary, use_container_width=True)
+    else:
+        st.info("📝 Belum ada perangkat yang ditambahkan. Gunakan tab 'Manage' untuk menambah perangkat atau klik 'Load Demo' di sidebar.")
+
+with tab3:
+    # ==================== ANALYTICS ====================
+    st.markdown('<div class="section-title">📈 Analisis Lanjutan</div>', unsafe_allow_html=True)
+    
+    if st.session_state.devices:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### 📊 Distribusi Konsumsi")
+            if st.session_state.devices:
+                df_devices = pd.DataFrame(st.session_state.devices)
+                
+                if PLOTLY_AVAILABLE:
+                    fig = px.pie(df_devices, values='energy', names='name', 
+                                title='Distribusi Konsumsi Energi per Perangkat')
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    fig, ax = plt.subplots(figsize=(8, 8))
+                    ax.pie(df_devices['energy'], labels=df_devices['name'], autopct='%1.1f%%')
+                    ax.set_title('Distribusi Konsumsi Energi per Perangkat')
+                    st.pyplot(fig)
+        
+        with col2:
+            st.markdown("### 🔍 Perbandingan Biaya")
+            if st.session_state.devices:
+                df_devices = pd.DataFrame(st.session_state.devices)
+                
+                if PLOTLY_AVAILABLE:
+                    fig = px.bar(df_devices, x='name', y='cost',
+                                title='Biaya per Perangkat',
+                                color='cost',
+                                color_continuous_scale='Blues')
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    bars = ax.bar(df_devices['name'], df_devices['cost'])
+                    ax.set_ylabel('Biaya (Rp)')
+                    ax.set_xlabel('Perangkat')
+                    ax.set_title('Biaya per Perangkat')
+                    ax.tick_params(axis='x', rotation=45)
+                    
+                    # Format y-axis
+                    ax.get_yaxis().set_major_formatter(
+                        plt.FuncFormatter(lambda x, p: f'{x:,.0f}')
+                    )
+                    st.pyplot(fig)
+        
+        # Efficiency analysis
+        st.markdown("### ⚡ Analisis Efisiensi")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            avg_power = sum(device["power"] for device in st.session_state.devices) / len(st.session_state.devices)
+            st.metric("Rata-rata Daya", f"{avg_power:.0f} W")
+        
+        with col2:
+            avg_hours = sum(device["hours"] for device in st.session_state.devices) / len(st.session_state.devices)
+            st.metric("Rata-rata Jam Pakai", f"{avg_hours:.1f} jam/hari")
+        
+        with col3:
+            efficiency_score = total_energy / (total_power * 0.01)  # Simple efficiency metric
+            st.metric("Skor Efisiensi", f"{efficiency_score:.1f}")
+    
+    else:
+        st.info("📊 Tambahkan perangkat untuk melihat analisis")
 
 with tab4:
     # ==================== OPTIMIZATION ====================
@@ -629,28 +800,53 @@ with tab5:
     if st.session_state.historical_data:
         df_hist = pd.DataFrame(st.session_state.historical_data)
 
-        # Trend charts
+        # Trend charts dengan matplotlib
         col1, col2 = st.columns(2)
 
         with col1:
             st.markdown("#### 📈 Trend Konsumsi Energi")
-            fig = px.line(df_hist, x='month', y='energy',
-                         markers=True,
-                         labels={'energy': 'Energi (kWh)', 'month': 'Bulan'},
-                         title='')
-            fig.update_traces(line_color='#667eea', line_width=3, marker_size=10)
-            fig.update_layout(height=350)
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = px.line(df_hist, x='month', y='energy',
+                             markers=True,
+                             labels={'energy': 'Energi (kWh)', 'month': 'Bulan'})
+                fig.update_traces(line_color='#667eea', line_width=3, marker_size=10)
+                fig.update_layout(height=350)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                fig, ax = plt.subplots(figsize=(10, 6))
+                ax.plot(df_hist['month'], df_hist['energy'], 
+                       marker='o', linewidth=3, color='#667eea', markersize=8)
+                ax.set_ylabel('Energi (kWh)')
+                ax.set_xlabel('Bulan')
+                ax.grid(True, alpha=0.3)
+                ax.tick_params(axis='x', rotation=45)
+                plt.tight_layout()
+                st.pyplot(fig)
 
         with col2:
             st.markdown("#### 💰 Trend Biaya")
-            fig = px.bar(df_hist, x='month', y='cost',
-                        labels={'cost': 'Biaya (Rp)', 'month': 'Bulan'},
-                        title='',
-                        color='cost',
-                        color_continuous_scale='Blues')
-            fig.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = px.bar(df_hist, x='month', y='cost',
+                            labels={'cost': 'Biaya (Rp)', 'month': 'Bulan'},
+                            color='cost',
+                            color_continuous_scale='Blues')
+                fig.update_layout(height=350, showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                fig, ax = plt.subplots(figsize=(10, 6))
+                bars = ax.bar(df_hist['month'], df_hist['cost'], 
+                             color=plt.cm.Blues(np.linspace(0.4, 1, len(df_hist))))
+                ax.set_ylabel('Biaya (Rp)')
+                ax.set_xlabel('Bulan')
+                ax.tick_params(axis='x', rotation=45)
+                ax.grid(axis='y', alpha=0.3)
+                
+                # Format y-axis dengan separator ribuan
+                ax.get_yaxis().set_major_formatter(
+                    plt.FuncFormatter(lambda x, p: f'{x:,.0f}')
+                )
+                plt.tight_layout()
+                st.pyplot(fig)
 
         # Statistics
         st.markdown("---")
@@ -762,7 +958,6 @@ with tab6:
 
                 st.session_state.devices.append(new_device)
                 st.success(f"✅ **{device_name}** berhasil ditambahkan!")
-                st.balloons()
                 st.rerun()
             else:
                 st.error("❌ Nama perangkat tidak boleh kosong!")
@@ -934,75 +1129,6 @@ with tab7:
             </div>
             """, unsafe_allow_html=True)
 
-        # Live charts
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("#### ⚡ Voltage & Current Monitoring")
-            if len(st.session_state.sensor_data) > 5:
-                df_voltage = pd.DataFrame(st.session_state.sensor_data[-30:])
-
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=df_voltage['timestamp'],
-                    y=df_voltage['voltage'],
-                    mode='lines+markers',
-                    name='Voltage (V)',
-                    line=dict(color='#667eea', width=2)
-                ))
-
-                fig.add_trace(go.Scatter(
-                    x=df_voltage['timestamp'],
-                    y=df_voltage['current'] * 100,  # Scale for visibility
-                    mode='lines+markers',
-                    name='Current (A × 100)',
-                    line=dict(color='#f5576c', width=2),
-                    yaxis='y2'
-                ))
-
-                fig.update_layout(
-                    height=350,
-                    yaxis=dict(title='Voltage (V)'),
-                    yaxis2=dict(title='Current (A)', overlaying='y', side='right'),
-                    hovermode='x unified'
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-
-        with col2:
-            st.markdown("#### 🌡️ Temperature & Humidity")
-            if len(st.session_state.sensor_data) > 5:
-                df_temp = pd.DataFrame(st.session_state.sensor_data[-30:])
-
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=df_temp['timestamp'],
-                    y=df_temp['temp'],
-                    mode='lines+markers',
-                    name='Temperature (°C)',
-                    fill='tozeroy',
-                    line=dict(color='#ff6b6b', width=2)
-                ))
-
-                fig.add_trace(go.Scatter(
-                    x=df_temp['timestamp'],
-                    y=df_temp['humidity'],
-                    mode='lines+markers',
-                    name='Humidity (%)',
-                    yaxis='y2',
-                    line=dict(color='#4ecdc4', width=2)
-                ))
-
-                fig.update_layout(
-                    height=350,
-                    yaxis=dict(title='Temperature (°C)'),
-                    yaxis2=dict(title='Humidity (%)', overlaying='y', side='right'),
-                    hovermode='x unified'
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-
         # Data log table
         st.markdown("---")
         st.markdown("### 📝 Recent Data Log (Last 10 Readings)")
@@ -1062,172 +1188,92 @@ with tab7:
         Pastikan ESP32 sudah terhubung dan mengirim data.
         """)
 
-    # Technical specifications
-    st.markdown("---")
-    st.markdown("### 🔧 Spesifikasi Teknis ESP32")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("""
-        #### 📊 Hardware Components
-
-        **Microcontroller:**
-        - ESP32-WROOM-32 DevKit
-        - Dual-core 240MHz
-        - WiFi 802.11 b/g/n
-        - Bluetooth 4.2
-
-        **Sensors:**
-        - 🔋 **INA219** - Voltage & Current Sensor
-          - Range: 0-26V, 0-3.2A
-          - Resolution: 0.8mV, 0.1mA
-
-        - 🌡️ **DHT22** - Temperature & Humidity
-          - Temp: -40 to 80°C (±0.5°C)
-          - Humidity: 0-100% (±2%)
-
-        - 💡 **LDR** - Light Sensor
-        - 🔌 **Relay Module** - Device Control (5V/10A)
-        """)
-
-    with col2:
-        st.markdown("""
-        #### ⚙️ Software & Configuration
-
-        **Firmware:**
-        - Platform: Arduino IDE / PlatformIO
-        - Language: C++
-        - Libraries: WiFi.h, WebServer.h, DHT.h, Wire.h
-
-        **Communication:**
-        - Protocol: HTTP REST API
-        - Format: JSON
-        - Endpoint: `/api/sensor/data`
-        - Update Rate: 2 seconds
-
-        **WiFi Configuration:**
-        - SSID: `SmartHome_WIFI`
-        - Password: `smarthome123`
-        - IP Mode: DHCP / Static
-
-        **Data Storage:**
-        - Local: SD Card (Optional)
-        - Cloud: MQTT/ThingSpeak (Optional)
-        """)
-
-    # Setup guide
-    st.markdown("---")
-    st.markdown("### 📖 Panduan Setup ESP32")
-
-    with st.expander("🔧 Langkah-langkah Instalasi Hardware"):
-        st.markdown("""
-        **1. Persiapan Komponen:**
-        - ESP32 DevKit
-        - Sensor INA219
-        - Sensor DHT22
-        - Kabel jumper
-        - Breadboard
-        - Power supply 5V
-
-        **2. Wiring Diagram:**
-        ```
-        ESP32          INA219
-        -------------------------
-        3.3V    --->   VCC
-        GND     --->   GND
-        GPIO21  --->   SDA
-        GPIO22  --->   SCL
-
-        ESP32          DHT22
-        -------------------------
-        3.3V    --->   VCC
-        GND     --->   GND
-        GPIO4   --->   DATA
-        ```
-
-        **3. Upload Firmware:**
-        - Buka Arduino IDE
-        - Install library: INA219, DHT
-        - Upload code ke ESP32
-        - Monitor Serial untuk debugging
-
-        **4. Konfigurasi WiFi:**
-        - Edit SSID dan Password di code
-        - ESP32 akan auto-connect saat boot
-        - Cek IP address di Serial Monitor
-        """)
-
-    with st.expander("💻 Panduan Software Integration"):
-        st.markdown("""
-        **API Endpoints:**
-
-        **GET** `/api/sensor/data`
-        - Response: JSON dengan data sensor real-time
-
-        **GET** `/api/sensor/history`
-        - Response: Array data historis
-
-        **POST** `/api/control/relay`
-        - Body: `{"state": "ON/OFF"}`
-        - Response: Status relay
-
-        **Example Response:**
-        ```json
-        {
-          "timestamp": "2024-01-15 10:30:00",
-          "voltage": 220.5,
-          "current": 2.3,
-          "power": 507,
-          "energy": 0.253,
-          "temperature": 27.2,
-          "humidity": 65,
-          "status": "OK"
-        }
-        ```
-        """)
-
 # ==================== FOOTER ====================
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;'>
-    <h2>🎓 Smart Energy Monitor Pro</h2>
-    <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
 
-st.markdown("""
-<div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;'>
-    <h2> Smart Energy Monitor Pro</h2>
-    <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
+# Footer dengan styling yang benar
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 2rem; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        border-radius: 15px; 
+        color: white;
+        margin-top: 2rem;
+    '>
+        <h2>🎓 Smart Energy Monitor Pro</h2>
+        <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
-    <div style="display: flex; justify-content: center; gap: 3rem; margin: 2rem 0; flex-wrap: wrap;">
-        <div style="background: white; color: #333; padding: 1.5rem; border-radius: 12px; min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+# Developer Cards menggunakan columns
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(
+        """
+        <div style='
+            background: white; 
+            color: #333; 
+            padding: 1.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 1rem 0;
+        '>
             <h3 style="color: #667eea; margin-bottom: 0.5rem;">Muhammad Givari Ramadhan Kagira</h3>
             <p style="font-size: 1.1em; margin: 0.5rem 0;"><strong>NIM:</strong> 241734018</p>
             <p style="margin: 0;">Full Stack Developer & IoT Specialist</p>
             <p style="font-size: 0.9em; color: #666;">Software Architecture, Frontend, Backend, IoT Integration</p>
         </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-        <div style="background: white; color: #333; padding: 1.5rem; border-radius: 12px; min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+with col2:
+    st.markdown(
+        """
+        <div style='
+            background: white; 
+            color: #333; 
+            padding: 1.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 1rem 0;
+        '>
             <h3 style="color: #764ba2; margin-bottom: 0.5rem;">Hanif Nur Hakim</h3>
             <p style="font-size: 1.1em; margin: 0.5rem 0;"><strong>NIM:</strong> 241734008</p>
             <p style="margin: 0;">Hardware Engineer & System Integrator</p>
             <p style="font-size: 0.9em; color: #666;">ESP32 Development, Sensor Integration, Circuit Design</p>
         </div>
-    </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid rgba(255,255,255,0.3);">
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong> Mata Kuliah:</strong> Dasar Pemrograman</p>
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong> Institusi:</strong> Politeknik Negeri Bandung</p>
-        <p style="font-size: 1em;"><strong> Tahun:</strong> 2025</p>
-    </div>
-
-    <div style="margin-top: 1.5rem; font-size: 0.9em; opacity: 0.9;">
+# Info tambahan
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 1.5rem; 
+        background: rgba(255,255,255,0.1); 
+        border-radius: 10px; 
+        color: white;
+        margin-top: 1rem;
+    '>
+        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
+        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
+        <p style="font-size: 1em; margin-bottom: 1rem;"><strong>📅 Tahun:</strong> 2025</p>
+        
         <p><em>⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</em></p>
         <p><em>🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</em></p>
-        <p style="margin-top: 1rem;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.8em;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, 
+    unsafe_allow_html=True
+)
 
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
