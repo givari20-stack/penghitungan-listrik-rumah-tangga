@@ -432,57 +432,7 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Progress to Target
-  with tab1:
-    # ==================== DASHBOARD UTAMA ====================
-    st.markdown('<div class="section-title">📊 Overview Konsumsi Energi Real-time</div>', unsafe_allow_html=True)
-    
-    total_energy = sum(device["energy"] for device in st.session_state.devices)
-    total_cost = sum(device["cost"] for device in st.session_state.devices)
-    device_count = len(st.session_state.devices)
-    carbon_footprint = calculate_carbon_footprint(total_energy)
-    
-    if st.session_state.sensor_data:
-        current_power = st.session_state.sensor_data[-1]["power"]
-        current_temp = st.session_state.sensor_data[-1]["temp"]
-        current_voltage = st.session_state.sensor_data[-1]["voltage"]
-        current_current = st.session_state.sensor_data[-1]["current"]
-    else:
-        current_power = 0
-        current_temp = 25
-        current_voltage = 220
-        current_current = 0
-    
-    # KPI Cards Row 1
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="sensor-card">
-            <h3>🔋 Total Energi</h3>
-            <h2>{total_energy:.1f} kWh</h2>
-            <p>Bulanan • {device_count} Devices</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="cost-card">
-            <h3>💰 Biaya Total</h3>
-            <h2>Rp {total_cost:,.0f}</h2>
-            <p>Per Bulan</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="energy-card">
-            <h3>⚡ Daya Real-time</h3>
-            <h2>{current_power} W</h2>
-            <p>{current_voltage} V • {current_current:.1f} A</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
+     with col4:
         st.markdown(f"""
         <div class="success-card">
             <h3>🌱 Carbon</h3>
@@ -492,7 +442,7 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Progress to Target
-    st.markdown("---")  # INI YANG DIPERBAIKI - indentasi konsisten
+    st.markdown("---")
     progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
 
     col1, col2 = st.columns([3, 1])
@@ -524,7 +474,7 @@ with tab1:
         else:
             st.info("📊 Tambahkan perangkat untuk melihat analytics")
 
-    with col2:  # INI YANG DIPERBAIKI - struktur with col2 yang lengkap
+    with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
         if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
             df_sensor = pd.DataFrame(st.session_state.sensor_data[-20:])  # Last 20 readings
@@ -1493,6 +1443,7 @@ with tab3:
                         color='Cost/Hour',
                         color_continuous_scale='Reds')
             fig.update_layout(height=
+
 
 
 
