@@ -55,6 +55,7 @@ with col1:
         <div class='developer-card'>
             <h3>Muhammad Givari Ramadhan Kagira</h3>
             <p class='nim'><strong>NIM:</strong> 241734018</p>
+            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
             <p class='role'>Full Stack Developer & IoT Specialist</p>
             <p class='skills'>Software Architecture, Frontend, Backend, IoT Integration</p>
         </div>
@@ -68,6 +69,7 @@ with col2:
         <div class='developer-card'>
             <h3>Hanif Nur Hakim</h3>
             <p class='nim'><strong>NIM:</strong> 241734008</p>
+            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
             <p class='role'>Hardware Engineer & System Integrator</p>
             <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
         </div>
@@ -91,9 +93,6 @@ st.markdown(
         <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
         <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
         
-        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</p>
-        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</p>
-        <p style="margin-top: 1rem; font-size: 0.8em; color: #c084fc;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
     </div>
     """, 
     unsafe_allow_html=True
