@@ -344,7 +344,7 @@ with st.sidebar:
 
 # ==================== HEADER ====================
 col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
+    with col2:
     st.markdown('<h1 class="main-header">⚡ SMART ENERGY MONITOR PRO</h1>', unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em;'><strong>Sistem Monitoring & Optimasi Konsumsi Energi Pintar</strong></p>", unsafe_allow_html=True)
 
@@ -421,7 +421,7 @@ with tab1:
             <p>{current_voltage} V • {current_current:.1f} A</p>
         </div>
         """, unsafe_allow_html=True)
-with col4:
+    with col4:
         st.markdown(f"""
         <div class="success-card">
             <h3>🌱 Carbon</h3>
@@ -666,7 +666,7 @@ with tab5:
             max_energy = df_hist['energy'].max()
             max_month = df_hist.loc[df_hist['energy'].idxmax(), 'month']
             st.metric("Peak Consumption", f"{max_energy:.0f} kWh", max_month)
-with col4:
+    with col4:
             min_energy = df_hist['energy'].min()
             min_month = df_hist.loc[df_hist['energy'].idxmin(), 'month']
             st.metric("Lowest Consumption", f"{min_energy:.0f} kWh", min_month)
@@ -910,7 +910,7 @@ with tab7:
                 <p>Power Usage</p>
             </div>
             """, unsafe_allow_html=True)
-with col4:
+    with col4:
             st.markdown(f"""
             <div class="success-card">
                 <h3>🌡️ Suhu</h3>
