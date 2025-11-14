@@ -1216,9 +1216,9 @@ st.markdown("""
     </div>
 
     <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid rgba(255,255,255,0.3);">
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
-        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
-        <p style="font-size: 1em;"><strong>📅 Tahun:</strong> 2025</p>
+        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong> Mata Kuliah:</strong> Dasar Pemrograman</p>
+        <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong> Institusi:</strong> Politeknik Negeri Bandung</p>
+        <p style="font-size: 1em;"><strong> Tahun:</strong> 2025</p>
     </div>
 
     <div style="margin-top: 1.5rem; font-size: 0.9em; opacity: 0.9;">
