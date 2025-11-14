@@ -432,80 +432,156 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Progress to Target
-   st.markdown("---")
-progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
-
-col1, col2 = st.columns([3, 1])
-with col1:
-    st.markdown("### 🎯 Progress ke Target Bulanan")
-    st.progress(progress_pct / 100)
-with col2:
-    st.metric("Target Status", f"{progress_pct:.0f}%", 
-             f"{total_energy - st.session_state.energy_target:.0f} kWh")
-
-# Charts Row
-st.markdown("---")
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("#### 📈 Konsumsi Energi per Device")
-    if st.session_state.devices:
-        # Plotly bar chart
-        df_devices = pd.DataFrame(st.session_state.devices)
-        fig = px.bar(df_devices, 
-                    x='name', 
-                    y='energy',
-                    color='energy',
-                    color_continuous_scale='Viridis',
-                    labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                    title='')
-        fig.update_layout(height=350, showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("📊 Tambahkan perangkat untuk melihat analytics")
-
-# Cost breakdown
-st.markdown("---")
-st.markdown("#### 💰 Breakdown Biaya Detail")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    daily_cost = total_cost / 30
-    st.metric("Biaya Harian", f"Rp {daily_cost:,.0f}")
-
-with col2:
-    weekly_cost = total_cost / 4
-    st.metric("Biaya Mingguan", f"Rp {weekly_cost:,.0f}")
-
-with col3:
-    yearly_cost = total_cost * 12
-    st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
-
-# Peak hours analysis
-st.markdown("---")
-st.markdown("#### 🕐 Analisis Peak Hours")
-
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    peak_info = """
-    **Kategori Waktu Penggunaan:**
-    - 🌅 **Off-Peak** (22:00 - 06:00): Tarif rendah, ideal untuk charging & perangkat besar
-    - ☀️ **Mid-Peak** (06:00 - 17:00): Tarif normal
-    - 🌆 **Peak** (17:00 - 22:00): Tarif tertinggi, konsumsi maksimal
+  with tab1:
+    # ==================== DASHBOARD UTAMA ====================
+    st.markdown('<div class="section-title">📊 Overview Konsumsi Energi Real-time</div>', unsafe_allow_html=True)
     
-    **Rekomendasi:**
-    - Gunakan mesin cuci & water heater di jam off-peak
-    - Hindari AC bersamaan dengan perangkat besar di peak hours
-    """
-    st.info(peak_info)
+    total_energy = sum(device["energy"] for device in st.session_state.devices)
+    total_cost = sum(device["cost"] for device in st.session_state.devices)
+    device_count = len(st.session_state.devices)
+    carbon_footprint = calculate_carbon_footprint(total_energy)
+    
+    if st.session_state.sensor_data:
+        current_power = st.session_state.sensor_data[-1]["power"]
+        current_temp = st.session_state.sensor_data[-1]["temp"]
+        current_voltage = st.session_state.sensor_data[-1]["voltage"]
+        current_current = st.session_state.sensor_data[-1]["current"]
+    else:
+        current_power = 0
+        current_temp = 25
+        current_voltage = 220
+        current_current = 0
+    
+    # KPI Cards Row 1
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(f"""
+        <div class="sensor-card">
+            <h3>🔋 Total Energi</h3>
+            <h2>{total_energy:.1f} kWh</h2>
+            <p>Bulanan • {device_count} Devices</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="cost-card">
+            <h3>💰 Biaya Total</h3>
+            <h2>Rp {total_cost:,.0f}</h2>
+            <p>Per Bulan</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div class="energy-card">
+            <h3>⚡ Daya Real-time</h3>
+            <h2>{current_power} W</h2>
+            <p>{current_voltage} V • {current_current:.1f} A</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div class="success-card">
+            <h3>🌱 Carbon</h3>
+            <h2>{carbon_footprint:.1f} kg</h2>
+            <p>CO₂ per bulan</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Progress to Target
+    st.markdown("---")  # INI YANG DIPERBAIKI - indentasi konsisten
+    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
 
-with col2:
-    st.markdown("**Potensi Hemat:**")
-    potential_savings = total_cost * 0.20
-    st.success(f"Rp {potential_savings:,.0f}/bulan")
-    st.caption("Dengan optimasi jadwal penggunaan")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown("### 🎯 Progress ke Target Bulanan")
+        st.progress(progress_pct / 100)
+    with col2:
+        st.metric("Target Status", f"{progress_pct:.0f}%", 
+                 f"{total_energy - st.session_state.energy_target:.0f} kWh")
+
+    # Charts Row
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### 📈 Konsumsi Energi per Device")
+        if st.session_state.devices:
+            # Plotly bar chart
+            df_devices = pd.DataFrame(st.session_state.devices)
+            fig = px.bar(df_devices, 
+                        x='name', 
+                        y='energy',
+                        color='energy',
+                        color_continuous_scale='Viridis',
+                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
+                        title='')
+            fig.update_layout(height=350, showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("📊 Tambahkan perangkat untuk melihat analytics")
+
+    with col2:  # INI YANG DIPERBAIKI - struktur with col2 yang lengkap
+        st.markdown("#### ⚡ Real-time Power Consumption")
+        if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
+            df_sensor = pd.DataFrame(st.session_state.sensor_data[-20:])  # Last 20 readings
+            fig = px.line(df_sensor, 
+                         x='timestamp', 
+                         y='power',
+                         markers=True,
+                         labels={'power': 'Daya (W)', 'timestamp': 'Waktu'},
+                         title='')
+            fig.update_traces(line_color='#FF6B6B', line_width=3)
+            fig.update_layout(height=400)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("📡 Waiting for sensor data...")
+
+    # Cost breakdown
+    st.markdown("---")
+    st.markdown("#### 💰 Breakdown Biaya Detail")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        daily_cost = total_cost / 30
+        st.metric("Biaya Harian", f"Rp {daily_cost:,.0f}")
+
+    with col2:
+        weekly_cost = total_cost / 4
+        st.metric("Biaya Mingguan", f"Rp {weekly_cost:,.0f}")
+
+    with col3:
+        yearly_cost = total_cost * 12
+        st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
+
+    # Peak hours analysis
+    st.markdown("---")
+    st.markdown("#### 🕐 Analisis Peak Hours")
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        peak_info = """
+        **Kategori Waktu Penggunaan:**
+        - 🌅 **Off-Peak** (22:00 - 06:00): Tarif rendah, ideal untuk charging & perangkat besar
+        - ☀️ **Mid-Peak** (06:00 - 17:00): Tarif normal
+        - 🌆 **Peak** (17:00 - 22:00): Tarif tertinggi, konsumsi maksimal
+        
+        **Rekomendasi:**
+        - Gunakan mesin cuci & water heater di jam off-peak
+        - Hindari AC bersamaan dengan perangkat besar di peak hours
+        """
+        st.info(peak_info)
+
+    with col2:
+        st.markdown("**Potensi Hemat:**")
+        potential_savings = total_cost * 0.20
+        st.success(f"Rp {potential_savings:,.0f}/bulan")
+        st.caption("Dengan optimasi jadwal penggunaan")
     
     else:
         st.info("📊 Tambahkan perangkat untuk melihat analytics")
@@ -1417,5 +1493,6 @@ with tab3:
                         color='Cost/Hour',
                         color_continuous_scale='Reds')
             fig.update_layout(height=
+
 
 
