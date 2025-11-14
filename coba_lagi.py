@@ -432,78 +432,80 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Progress to Target
-    st.markdown("---")
-    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+   st.markdown("---")
+progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown("### 🎯 Progress ke Target Bulanan")
+    st.progress(progress_pct / 100)
+with col2:
+    st.metric("Target Status", f"{progress_pct:.0f}%", 
+             f"{total_energy - st.session_state.energy_target:.0f} kWh")
+
+# Charts Row
+st.markdown("---")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### 📈 Konsumsi Energi per Device")
+    if st.session_state.devices:
+        # Plotly bar chart
+        df_devices = pd.DataFrame(st.session_state.devices)
+        fig = px.bar(df_devices, 
+                    x='name', 
+                    y='energy',
+                    color='energy',
+                    color_continuous_scale='Viridis',
+                    labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
+                    title='')
+        fig.update_layout(height=350, showlegend=False)
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("📊 Tambahkan perangkat untuk melihat analytics")
+
+# Cost breakdown
+st.markdown("---")
+st.markdown("#### 💰 Breakdown Biaya Detail")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    daily_cost = total_cost / 30
+    st.metric("Biaya Harian", f"Rp {daily_cost:,.0f}")
+
+with col2:
+    weekly_cost = total_cost / 4
+    st.metric("Biaya Mingguan", f"Rp {weekly_cost:,.0f}")
+
+with col3:
+    yearly_cost = total_cost * 12
+    st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
+
+# Peak hours analysis
+st.markdown("---")
+st.markdown("#### 🕐 Analisis Peak Hours")
+
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    peak_info = """
+    **Kategori Waktu Penggunaan:**
+    - 🌅 **Off-Peak** (22:00 - 06:00): Tarif rendah, ideal untuk charging & perangkat besar
+    - ☀️ **Mid-Peak** (06:00 - 17:00): Tarif normal
+    - 🌆 **Peak** (17:00 - 22:00): Tarif tertinggi, konsumsi maksimal
     
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown("### 🎯 Progress ke Target Bulanan")
-        st.progress(progress_pct / 100)
-    with col2:
-        st.metric("Target Status", f"{progress_pct:.0f}%", 
-                 f"{total_energy - st.session_state.energy_target:.0f} kWh")
-    
-    # Charts Row
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 📈 Konsumsi Energi per Device")
-        if st.session_state.devices:
-            # Plotly bar chart
-            df_devices = pd.DataFrame(st.session_state.devices)
-            fig = px.bar(df_devices, 
-                        x='name', 
-                        y='energy',
-                        color='energy',
-                        color_continuous_scale='Viridis',
-                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                        title='')
-            fig.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Cost breakdown
-        st.markdown("---")
-        st.markdown("#### 💰 Breakdown Biaya Detail")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            daily_cost = total_cost / 30
-            st.metric("Biaya Harian", f"Rp {daily_cost:,.0f}")
-        
-        with col2:
-            weekly_cost = total_cost / 4
-            st.metric("Biaya Mingguan", f"Rp {weekly_cost:,.0f}")
-        
-        with col3:
-            yearly_cost = total_cost * 12
-            st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
-        
-        # Peak hours analysis
-        st.markdown("---")
-        st.markdown("#### 🕐 Analisis Peak Hours")
-        
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            peak_info = """
-            **Kategori Waktu Penggunaan:**
-            - 🌅 **Off-Peak** (22:00 - 06:00): Tarif rendah, ideal untuk charging & perangkat besar
-            - ☀️ **Mid-Peak** (06:00 - 17:00): Tarif normal
-            - 🌆 **Peak** (17:00 - 22:00): Tarif tertinggi, konsumsi maksimal
-            
-            **Rekomendasi:**
-            - Gunakan mesin cuci & water heater di jam off-peak
-            - Hindari AC bersamaan dengan perangkat besar di peak hours
-            """
-            st.info(peak_info)
-        
-        with col2:
-            st.markdown("**Potensi Hemat:**")
-            potential_savings = total_cost * 0.20
-            st.success(f"Rp {potential_savings:,.0f}/bulan")
-            st.caption("Dengan optimasi jadwal penggunaan")
+    **Rekomendasi:**
+    - Gunakan mesin cuci & water heater di jam off-peak
+    - Hindari AC bersamaan dengan perangkat besar di peak hours
+    """
+    st.info(peak_info)
+
+with col2:
+    st.markdown("**Potensi Hemat:**")
+    potential_savings = total_cost * 0.20
+    st.success(f"Rp {potential_savings:,.0f}/bulan")
+    st.caption("Dengan optimasi jadwal penggunaan")
     
     else:
         st.info("📊 Tambahkan perangkat untuk melihat analytics")
@@ -1415,4 +1417,5 @@ with tab3:
                         color='Cost/Hour',
                         color_continuous_scale='Reds')
             fig.update_layout(height=
+
 
