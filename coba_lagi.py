@@ -1194,6 +1194,11 @@ st.markdown("""
     <h2>🎓 Smart Energy Monitor Pro</h2>
     <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
 
+st.markdown("""
+<div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;'>
+    <h2>🎓 Smart Energy Monitor Pro</h2>
+    <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
+
     <div style="display: flex; justify-content: center; gap: 3rem; margin: 2rem 0; flex-wrap: wrap;">
         <div style="background: white; color: #333; padding: 1.5rem; border-radius: 12px; min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <h3 style="color: #667eea; margin-bottom: 0.5rem;">Muhammad Givari Ramadhan Kagira</h3>
