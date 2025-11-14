@@ -388,7 +388,7 @@ with st.sidebar:
 # ==================== HEADER ====================
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.markdown('<h1 class="main-header">⚡ SMART ENERGY MONITOR PRO</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">⚡ SMART ENERGY MONITOR </h1>', unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em;'><strong>Sistem Monitoring & Optimasi Konsumsi Energi Pintar</strong></p>", unsafe_allow_html=True)
 
 # Check alerts
@@ -1267,9 +1267,6 @@ st.markdown(
         <p style="font-size: 1em; margin-bottom: 0.5rem;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
         <p style="font-size: 1em; margin-bottom: 1rem;"><strong>📅 Tahun:</strong> 2025</p>
         
-        <p><em>⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</em></p>
-        <p><em>🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</em></p>
-        <p style="margin-top: 1rem; font-size: 0.8em;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
     </div>
     """, 
     unsafe_allow_html=True
