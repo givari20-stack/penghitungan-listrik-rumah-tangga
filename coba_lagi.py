@@ -431,15 +431,15 @@ with col4:
         """, unsafe_allow_html=True)
     # Progress to Target
         st.markdown("---")
-    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
-
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown("### 🎯 Progress ke Target Bulanan")
-        st.progress(progress_pct / 100)
-    with col2:
-        st.metric("Target Status", f"{progress_pct:.0f}%",
-                 f"{total_energy - st.session_state.energy_target:.0f} kWh")
+        progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+    
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("### 🎯 Progress ke Target Bulanan")
+            st.progress(progress_pct / 100)
+        with col2:
+            st.metric("Target Status", f"{progress_pct:.0f}%",
+                     f"{total_energy - st.session_state.energy_target:.0f} kWh")
 
     # Charts Row
     st.markdown("---")
@@ -1221,4 +1221,5 @@ st.markdown("""
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
+
 
