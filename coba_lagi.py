@@ -15,7 +15,7 @@ except ImportError:
 
 # ==================== KONFIGURASI ====================
 st.set_page_config(
-    page_title="Smart Energy Monitor  ",
+    page_title="Smart Energy Monitor",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -303,7 +303,7 @@ def load_sample_data():
 # ==================== SIDEBAR ====================
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3096/3096976.png", width=80)
-    st.title("⚡ Smart Energy  ")
+    st.title("⚡ Smart Energy")
     st.markdown("---")
 
     st.subheader("🔧 Pengaturan")
@@ -474,16 +474,16 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-    #  gress to Target
+    # Progress to Target
     st.markdown("---")
-     gress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
 
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown("### 🎯  gress ke Target Bulanan")
-        st. gress( gress_pct / 100)
+        st.markdown("### 🎯 Progress ke Target Bulanan")
+        st.progress(progress_pct / 100)
     with col2:
-        st.metric("Target Status", f"{ gress_pct:.0f}%",
+        st.metric("Target Status", f"{progress_pct:.0f}%",
                  f"{total_energy - st.session_state.energy_target:.0f} kWh")
 
     # Charts Row
@@ -561,7 +561,7 @@ with tab1:
 
     with col3:
         yearly_cost = total_cost * 12
-        st.metric(" yeksi Tahunan", f"Rp {yearly_cost:,.0f}")
+        st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
 
     # Peak hours analysis
     st.markdown("---")
@@ -1046,7 +1046,7 @@ with tab7:
             **Connection Info:**
             - IP Address: 192.168.1.100
             - Port: 8080
-            -  tocol: HTTP/WebSocket
+            - Protocol: HTTP/WebSocket
             - Update Rate: 2 seconds
             - Uptime: 2h 34m 12s
             """)
@@ -1202,8 +1202,8 @@ st.markdown(
         color: white;
         margin-top: 2rem;
     '>
-        <h2>🎓 Smart Energy Monitor  </h2>
-        <p style='font-size: 1.1em;'><strong> ject Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
+        <h2>🎓 Smart Energy Monitor </h2>
+        <p style='font-size: 1.1em;'><strong>Project Tugas Akhir - D4 Teknik Konservasi Energi</strong></p>
     </div>
     """, 
     unsafe_allow_html=True
