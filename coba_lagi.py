@@ -430,35 +430,35 @@ with col4:
         </div>
         """, unsafe_allow_html=True)
     # Progress to Target
-    st.markdown("---")
-    progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
-
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown("### 🎯 Progress ke Target Bulanan")
-        st.progress(progress_pct / 100)
-    with col2:
-        st.metric("Target Status", f"{progress_pct:.0f}%",
-                 f"{total_energy - st.session_state.energy_target:.0f} kWh")
+        st.markdown("---")
+        progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
+    
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("### 🎯 Progress ke Target Bulanan")
+            st.progress(progress_pct / 100)
+        with col2:
+            st.metric("Target Status", f"{progress_pct:.0f}%",
+                     f"{total_energy - st.session_state.energy_target:.0f} kWh")
 
     # Charts Row
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("#### 📈 Konsumsi Energi per Device")
-        if st.session_state.devices:
-            # Plotly bar chart
-            df_devices = pd.DataFrame(st.session_state.devices)
-            fig = px.bar(df_devices,
-                        x='name',
-                        y='energy',
-                        color='energy',
-                        color_continuous_scale='Viridis',
-                        labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
-                        title='')
-            fig.update_layout(height=350, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+    
+        with col1:
+            st.markdown("#### 📈 Konsumsi Energi per Device")
+            if st.session_state.devices:
+                # Plotly bar chart
+                df_devices = pd.DataFrame(st.session_state.devices)
+                fig = px.bar(df_devices,
+                            x='name',
+                            y='energy',
+                            color='energy',
+                            color_continuous_scale='Viridis',
+                            labels={'energy': 'Energi (kWh)', 'name': 'Perangkat'},
+                            title='')
+                fig.update_layout(height=350, showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
     with col2:
         st.markdown("#### ⚡ Real-time Power Consumption")
         if st.session_state.sensor_data and len(st.session_state.sensor_data) > 1:
@@ -1221,3 +1221,6 @@ st.markdown("""
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
+
+
+
