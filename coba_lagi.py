@@ -432,7 +432,7 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Progress to Target
-     with col4:
+ with col4:
         st.markdown(f"""
         <div class="success-card">
             <h3>🌱 Carbon</h3>
@@ -1443,6 +1443,7 @@ with tab3:
                         color='Cost/Hour',
                         color_continuous_scale='Reds')
             fig.update_layout(height=
+
 
 
 
