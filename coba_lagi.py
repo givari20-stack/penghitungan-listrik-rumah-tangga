@@ -430,7 +430,7 @@ with col4:
         </div>
         """, unsafe_allow_html=True)
     # Progress to Target
-    st.markdown("---")
+        st.markdown("---")
     progress_pct = min((total_energy / st.session_state.energy_target) * 100, 100)
 
     col1, col2 = st.columns([3, 1])
@@ -1221,3 +1221,4 @@ st.markdown("""
 # ==================== AUTO-LOAD & INITIALIZATION ====================
 if not st.session_state.devices and not st.session_state.sensor_data:
     load_sample_data()
+
