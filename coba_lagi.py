@@ -24,6 +24,16 @@ st.set_page_config(
 # ==================== CSS CUSTOM ====================
 st.markdown("""
 <style>
+    /* ===== GLOBAL STYLES ===== */
+    .main {
+        background-color: #f8fafc;
+    }
+    
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    /* ===== HEADER STYLES ===== */
     .main-header {
         font-size: 2.8rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -32,82 +42,423 @@ st.markdown("""
         text-align: center;
         margin-bottom: 2rem;
         font-weight: bold;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    
+    /* ===== TAB STYLES ===== */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 16px;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        padding: 14px 28px;
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px;
+        font-weight: 700;
+        color: white !important;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: white !important;
+        color: #667eea !important;
+        border-color: white;
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: transparent !important;
+    }
+
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 0px;
+    }
+    
+    /* ===== CARD STYLES ===== */
     .metric-card {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        border-left: 5px solid #667eea;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 2rem;
+        border-radius: 20px;
+        border-left: 6px solid #667eea;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(102, 126, 234, 0.1);
     }
+    
     .metric-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.25);
+        border-left: 6px solid #764ba2;
     }
+
     .sensor-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 2rem;
+        border-radius: 20px;
         text-align: center;
-        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
+    
+    .sensor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ffd89b 0%, #19547b 100%);
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 48px rgba(102, 126, 234, 0.5);
+    }
+
     .energy-card {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 2rem;
+        border-radius: 20px;
         text-align: center;
-        box-shadow: 0 8px 16px rgba(245, 87, 108, 0.4);
+        box-shadow: 0 12px 40px rgba(245, 87, 108, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
+    
+    .energy-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 48px rgba(245, 87, 108, 0.5);
+    }
+
     .cost-card {
         background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 2rem;
+        border-radius: 20px;
         text-align: center;
-        box-shadow: 0 8px 16px rgba(79, 172, 254, 0.4);
+        box-shadow: 0 12px 40px rgba(79, 172, 254, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
+    
+    .cost-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 48px rgba(79, 172, 254, 0.5);
+    }
+
     .success-card {
         background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
+        padding: 2rem;
+        border-radius: 20px;
         text-align: center;
-        box-shadow: 0 8px 16px rgba(67, 233, 123, 0.4);
+        box-shadow: 0 12px 40px rgba(67, 233, 123, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
+    
+    .success-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 48px rgba(67, 233, 123, 0.5);
+    }
+
+    /* ===== SECTION STYLES ===== */
     .section-title {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin: 2rem 0 1rem 0;
-        border-bottom: 3px solid #667eea;
-        padding-bottom: 0.5rem;
-        font-weight: bold;
+        margin: 2.5rem 0 1.5rem 0;
+        border-bottom: 4px solid;
+        border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+        padding-bottom: 0.8rem;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: 0.5px;
     }
+
+    /* ===== ALERT STYLES ===== */
     .alert-box {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        padding: 12px 24px;
-        background-color: #f0f2f6;
-        border-radius: 10px;
-        font-weight: 600;
-    }
-    .comparison-card {
-        background: white;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-left: 6px solid #ffc107;
         padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    .stAlert {
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+    }
+
+    /* ===== COMPARISON CARD STYLES ===== */
+    .comparison-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 2rem;
+        border-radius: 18px;
+        border: 2px solid #e0e7ff;
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .comparison-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        transform: translateX(5px);
+    }
+
+    /* ===== BUTTON STYLES ===== */
+    .stButton button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
         border-radius: 12px;
-        border: 2px solid #e0e0e0;
-        margin: 1rem 0;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    
+    .stButton button:active {
+        transform: translateY(0);
+    }
+
+    /* ===== SIDEBAR STYLES ===== */
+    .css-1d391kg {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    }
+    
+    .css-1lcbmhc {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    }
+
+    /* ===== PROGRESS BAR STYLES ===== */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+    /* ===== METRIC STYLES ===== */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-weight: 600 !important;
+        color: #4a5568 !important;
+    }
+
+    /* ===== DATA FRAME STYLES ===== */
+    .dataframe {
+        border-radius: 15px !important;
+        overflow: hidden;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+    
+    .dataframe thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border: none !important;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background-color: #f7fafc !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background-color: #edf2f7 !important;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    /* ===== EXPANDER STYLES ===== */
+    .streamlit-expanderHeader {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        border-color: #667eea !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+    }
+
+    /* ===== NUMBER INPUT STYLES ===== */
+    .stNumberInput input {
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        padding: 0.75rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stNumberInput input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    /* ===== SLIDER STYLES ===== */
+    .stSlider [data-baseweb="slider"] {
+        color: #667eea !important;
+    }
+    
+    .stSlider [data-baseweb="thumb"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: 3px solid white !important;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    /* ===== SELECT BOX STYLES ===== */
+    .stSelectbox [data-baseweb="select"] {
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"]:hover {
+        border-color: #667eea !important;
+    }
+
+    /* ===== TEXT INPUT STYLES ===== */
+    .stTextInput input {
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stTextInput input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    /* ===== DOWNLOAD BUTTON STYLES ===== */
+    .stDownloadButton button {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.75rem 2rem !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3) !important;
+    }
+    
+    .stDownloadButton button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4) !important;
+        background: linear-gradient(135deg, #38a169 0%, #48bb78 100%) !important;
+    }
+
+    /* ===== SUCCESS MESSAGE STYLES ===== */
+    .stSuccess {
+        background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%) !important;
+        border: 1px solid #48bb78 !important;
+        border-radius: 15px !important;
+        padding: 1rem 1.5rem !important;
+    }
+
+    /* ===== ERROR MESSAGE STYLES ===== */
+    .stError {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%) !important;
+        border: 1px solid #f56565 !important;
+        border-radius: 15px !important;
+        padding: 1rem 1.5rem !important;
+    }
+
+    /* ===== INFO MESSAGE STYLES ===== */
+    .stInfo {
+        background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%) !important;
+        border: 1px solid #4299e1 !important;
+        border-radius: 15px !important;
+        padding: 1rem 1.5rem !important;
+    }
+
+    /* ===== WARNING MESSAGE STYLES ===== */
+    .stWarning {
+        background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%) !important;
+        border: 1px solid #ecc94b !important;
+        border-radius: 15px !important;
+        padding: 1rem 1.5rem !important;
+    }
+
+    /* ===== CUSTOM SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.6rem;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .metric-card, .sensor-card, .energy-card, .cost-card, .success-card {
+            padding: 1.5rem;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
