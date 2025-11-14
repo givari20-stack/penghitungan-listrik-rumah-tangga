@@ -21,514 +21,80 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==================== CSS CUSTOM ====================
-st.markdown("""
-<style>
-    /* ===== GLOBAL STYLES ===== */
-    .main {
-        background-color: #1a1a1a;
-    }
-    
-    .stApp {
-        background: linear-gradient(135deg, #2c1810 0%, #3a2619 100%);
-    }
-    
-    /* ===== HEADER STYLES ===== */
-    .main-header {
-        font-size: 3rem;
-        color: #ff9a3c !important;
-        text-align: center;
+# ==================== FOOTER ====================
+st.markdown("---")
+
+# Footer Header
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 2rem; 
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
+        border-radius: 20px; 
+        border: 3px solid #8a2be2;
         margin-bottom: 2rem;
-        font-weight: 900;
-        text-shadow: 0 4px 8px rgba(255, 154, 60, 0.4);
-        letter-spacing: 2px;
-        background: none !important;
-        -webkit-text-fill-color: #ff9a3c !important;
-    }
-    
-    /* ===== TAB STYLES ===== */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        padding: 20px;
-        border-radius: 25px;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(255, 154, 60, 0.2);
-        border: 2px solid #ff9a3c;
-    }
+        box-shadow: 0 10px 35px rgba(138, 43, 226, 0.3);
+    '>
+        <h2 style='color: #8a2be2; font-weight: 900; margin-bottom: 1rem;'>🎓 Smart Energy Monitor Pro</h2>
+        <p style='color: #d8c3ff; font-size: 1.2em; font-weight: 700;'>Project Tugas Akhir - D4 Teknik Konservasi Energi</p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
-    .stTabs [data-baseweb="tab"] {
-        padding: 16px 32px;
-        background-color: #5a3826 !important;
-        border-radius: 15px;
-        font-weight: 800;
-        color: #ffd8b8 !important;
-        border: 2px solid #ff9a3c;
-        transition: all 0.3s ease;
-        font-size: 1.1rem;
-        letter-spacing: 1px;
-    }
+# Developer Cards
+col1, col2 = st.columns(2)
 
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: #7a4c32 !important;
-        border-color: #ffb366;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(255, 179, 102, 0.4);
-    }
+with col1:
+    st.markdown(
+        """
+        <div class='developer-card'>
+            <h3>Muhammad Givari Ramadhan Kagira</h3>
+            <p class='nim'><strong>NIM:</strong> 241734018</p>
+            <p class='role'>Full Stack Developer & IoT Specialist</p>
+            <p class='skills'>Software Architecture, Frontend, Backend, IoT Integration</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-    .stTabs [aria-selected="true"] {
-        background-color: #ff9a3c !important;
-        color: #3a2619 !important;
-        border-color: #ff9a3c;
-        box-shadow: 0 8px 25px rgba(255, 154, 60, 0.6);
-        transform: translateY(-2px);
-    }
+with col2:
+    st.markdown(
+        """
+        <div class='developer-card'>
+            <h3>Hanif Nur Hakim</h3>
+            <p class='nim'><strong>NIM:</strong> 241734008</p>
+            <p class='role'>Hardware Engineer & System Integrator</p>
+            <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-    .stTabs [data-baseweb="tab-highlight"] {
-        background-color: transparent !important;
-    }
-
-    .stTabs [data-baseweb="tab-panel"] {
-        padding: 0px;
-    }
-    
-    /* ===== CARD STYLES ===== */
-    .metric-card {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        border: 2px solid #ff9a3c;
-        box-shadow: 0 8px 32px rgba(255, 154, 60, 0.15);
-        transition: all 0.3s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(255, 154, 60, 0.25);
-        border-color: #ffb366;
-    }
-
-    .sensor-card {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        color: #ffd8b8;
-        padding: 2rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(255, 154, 60, 0.2);
-        border: 2px solid #ff9a3c;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .sensor-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #ff9a3c 0%, #ff6b35 100%);
-    }
-    
-    .sensor-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(255, 154, 60, 0.3);
-        border-color: #ffb366;
-    }
-
-    .energy-card {
-        background: linear-gradient(135deg, #3a1f19 0%, #5a2f26 100%);
-        color: #ffd8b8;
-        padding: 2rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(255, 107, 53, 0.2);
-        border: 2px solid #ff6b35;
-        transition: all 0.3s ease;
-    }
-    
-    .energy-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(255, 107, 53, 0.3);
-        border-color: #ff8c66;
-    }
-
-    .cost-card {
-        background: linear-gradient(135deg, #193a2f 0%, #265a46 100%);
-        color: #d8ffeb;
-        padding: 2rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(83, 255, 170, 0.2);
-        border: 2px solid #53ffaa;
-        transition: all 0.3s ease;
-    }
-    
-    .cost-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(83, 255, 170, 0.3);
-        border-color: #85ffc4;
-    }
-
-    .success-card {
-        background: linear-gradient(135deg, #2f3a19 0%, #465a26 100%);
-        color: #f8ffd8;
-        padding: 2rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(170, 255, 83, 0.2);
-        border: 2px solid #aaff53;
-        transition: all 0.3s ease;
-    }
-    
-    .success-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(170, 255, 83, 0.3);
-        border-color: #c4ff85;
-    }
-
-    /* ===== SECTION STYLES ===== */
-    .section-title {
-        font-size: 2.2rem;
-        color: #ff9a3c !important;
-        margin: 2.5rem 0 1.5rem 0;
-        border-bottom: 3px solid #ff9a3c;
-        padding-bottom: 0.8rem;
-        font-weight: 800;
-        text-align: center;
-        letter-spacing: 1px;
-        background: none !important;
-        -webkit-text-fill-color: #ff9a3c !important;
-        text-shadow: 0 2px 4px rgba(255, 154, 60, 0.3);
-    }
-
-    /* ===== ALERT STYLES ===== */
-    .alert-box {
-        background: linear-gradient(135deg, #3a2f19 0%, #5a4626 100%);
-        border-left: 6px solid #ffb366;
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin: 1.5rem 0;
-        box-shadow: 0 6px 20px rgba(255, 179, 102, 0.2);
-        border: 1px solid #ffb366;
-        color: #ffd8b8;
-    }
-    
-    .stAlert {
-        border-radius: 15px;
-        padding: 1.2rem 1.8rem;
-        border: 2px solid;
-        color: #ffd8b8 !important;
-    }
-
-    /* ===== COMPARISON CARD STYLES ===== */
-    .comparison-card {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        border: 2px solid #ff9a3c;
-        margin: 1.5rem 0;
-        box-shadow: 0 6px 20px rgba(255, 154, 60, 0.1);
-        transition: all 0.3s ease;
-        color: #ffd8b8;
-    }
-    
-    .comparison-card:hover {
-        border-color: #ffb366;
-        box-shadow: 0 8px 25px rgba(255, 179, 102, 0.2);
-        transform: translateX(5px);
-    }
-
-    /* ===== BUTTON STYLES ===== */
-    .stButton button {
-        background: linear-gradient(135deg, #5a3826 0%, #7a4c32 100%);
-        color: #ffd8b8 !important;
-        border: 2px solid #ff9a3c;
-        padding: 0.8rem 2rem;
-        border-radius: 12px;
-        font-weight: 700;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(255, 154, 60, 0.2);
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(255, 154, 60, 0.4);
-        border-color: #ffb366;
-        background: linear-gradient(135deg, #7a4c32 0%, #5a3826 100%);
-    }
-    
-    .stButton button:active {
-        transform: translateY(0);
-    }
-
-    /* ===== SIDEBAR STYLES ===== */
-    .css-1d391kg {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        border-right: 2px solid #ff9a3c;
-    }
-    
-    .css-1lcbmhc {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%);
-        border-right: 2px solid #ff9a3c;
-    }
-
-    /* ===== PROGRESS BAR STYLES ===== */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #ff9a3c 0%, #ff6b35 100%);
-        border-radius: 10px;
-        border: 1px solid #ffb366;
-    }
-
-    /* ===== METRIC STYLES ===== */
-    [data-testid="stMetricValue"] {
-        font-size: 2.2rem !important;
-        font-weight: 800 !important;
-        color: #ff9a3c !important;
-        text-shadow: 0 2px 4px rgba(255, 154, 60, 0.3);
-    }
-    
-    [data-testid="stMetricLabel"] {
-        font-weight: 700 !important;
-        color: #ffd8b8 !important;
-        font-size: 1rem !important;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-    }
-
-    /* ===== DATA FRAME STYLES ===== */
-    .dataframe {
-        border-radius: 15px !important;
-        overflow: hidden;
-        box-shadow: 0 6px 20px rgba(255, 154, 60, 0.1) !important;
-        border: 2px solid #ff9a3c !important;
-        background-color: #3a2619 !important;
-    }
-    
-    .dataframe thead th {
-        background: linear-gradient(135deg, #5a3826 0%, #7a4c32 100%) !important;
-        color: #ffd8b8 !important;
-        font-weight: 800 !important;
-        border: 1px solid #ff9a3c !important;
-        font-size: 1rem !important;
-    }
-    
-    .dataframe tbody tr:nth-child(even) {
-        background-color: #3a2619 !important;
-    }
-    
-    .dataframe tbody tr:nth-child(odd) {
-        background-color: #2c1810 !important;
-    }
-    
-    .dataframe tbody tr:hover {
-        background-color: #5a3826 !important;
-        transform: scale(1.01);
-        transition: all 0.2s ease;
-    }
-    
-    .dataframe tbody td {
-        color: #ffd8b8 !important;
-        border: 1px solid #5a3826 !important;
-        font-weight: 600 !important;
-    }
-
-    /* ===== EXPANDER STYLES ===== */
-    .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%) !important;
-        border-radius: 12px !important;
-        border: 2px solid #ff9a3c !important;
-        font-weight: 700 !important;
-        transition: all 0.3s ease !important;
-        color: #ffd8b8 !important;
-    }
-    
-    .streamlit-expanderHeader:hover {
-        border-color: #ffb366 !important;
-        background: linear-gradient(135deg, #5a3826 0%, #7a4c32 100%) !important;
-        transform: translateY(-2px);
-    }
-
-    /* ===== NUMBER INPUT STYLES ===== */
-    .stNumberInput input {
-        border-radius: 12px !important;
-        border: 2px solid #ff9a3c !important;
-        padding: 0.8rem 1.2rem !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        background-color: #3a2619 !important;
-        color: #ffd8b8 !important;
-    }
-    
-    .stNumberInput input:focus {
-        border-color: #ffb366 !important;
-        box-shadow: 0 0 0 3px rgba(255, 179, 102, 0.2) !important;
-    }
-
-    /* ===== SLIDER STYLES ===== */
-    .stSlider [data-baseweb="slider"] {
-        color: #ff9a3c !important;
-    }
-    
-    .stSlider [data-baseweb="thumb"] {
-        background: linear-gradient(135deg, #ff9a3c 0%, #ff6b35 100%) !important;
-        border: 3px solid #ffd8b8 !important;
-        box-shadow: 0 3px 10px rgba(255, 154, 60, 0.4) !important;
-    }
-    
-    .stSlider [data-baseweb="track"] {
-        background-color: #5a3826 !important;
-        border: 1px solid #ff9a3c !important;
-    }
-
-    /* ===== SELECT BOX STYLES ===== */
-    .stSelectbox [data-baseweb="select"] {
-        border-radius: 12px !important;
-        border: 2px solid #ff9a3c !important;
-        transition: all 0.3s ease !important;
-        background-color: #3a2619 !important;
-    }
-    
-    .stSelectbox [data-baseweb="select"]:hover {
-        border-color: #ffb366 !important;
-    }
-    
-    .stSelectbox [data-baseweb="select"] input {
-        color: #ffd8b8 !important;
-    }
-
-    /* ===== TEXT INPUT STYLES ===== */
-    .stTextInput input {
-        border-radius: 12px !important;
-        border: 2px solid #ff9a3c !important;
-        padding: 0.8rem 1.2rem !important;
-        transition: all 0.3s ease !important;
-        background-color: #3a2619 !important;
-        color: #ffd8b8 !important;
-        font-weight: 600 !important;
-    }
-    
-    .stTextInput input:focus {
-        border-color: #ffb366 !important;
-        box-shadow: 0 0 0 3px rgba(255, 179, 102, 0.2) !important;
-    }
-
-    /* ===== DOWNLOAD BUTTON STYLES ===== */
-    .stDownloadButton button {
-        background: linear-gradient(135deg, #3a2619 0%, #5a3826 100%) !important;
-        color: #ffd8b8 !important;
-        border: 2px solid #53ffaa !important;
-        padding: 0.8rem 2rem !important;
-        border-radius: 12px !important;
-        font-weight: 700 !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 15px rgba(83, 255, 170, 0.2) !important;
-    }
-    
-    .stDownloadButton button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 8px 25px rgba(83, 255, 170, 0.3) !important;
-        border-color: #85ffc4 !important;
-        background: linear-gradient(135deg, #5a3826 0%, #3a2619 100%) !important;
-    }
-
-    /* ===== MESSAGE STYLES ===== */
-    .stSuccess {
-        background: linear-gradient(135deg, #2f3a19 0%, #465a26 100%) !important;
-        border: 2px solid #aaff53 !important;
-        border-radius: 15px !important;
-        padding: 1.2rem 1.8rem !important;
-        color: #f8ffd8 !important;
-    }
-
-    .stError {
-        background: linear-gradient(135deg, #3a1f19 0%, #5a2f26 100%) !important;
-        border: 2px solid #ff6b35 !important;
-        border-radius: 15px !important;
-        padding: 1.2rem 1.8rem !important;
-        color: #ffd8b8 !important;
-    }
-
-    .stInfo {
-        background: linear-gradient(135deg, #193a2f 0%, #265a46 100%) !important;
-        border: 2px solid #53ffaa !important;
-        border-radius: 15px !important;
-        padding: 1.2rem 1.8rem !important;
-        color: #d8ffeb !important;
-    }
-
-    .stWarning {
-        background: linear-gradient(135deg, #3a2f19 0%, #5a4626 100%) !important;
-        border: 2px solid #ffb366 !important;
-        border-radius: 15px !important;
-        padding: 1.2rem 1.8rem !important;
-        color: #ffd8b8 !important;
-    }
-
-    /* ===== TEXT COLOR OVERRIDES ===== */
-    .stMarkdown {
-        color: #ffd8b8 !important;
-    }
-    
-    p, div, span, label {
-        color: #ffd8b8 !important;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffd8b8 !important;
-    }
-    
-    /* Tab text color fix */
-    .stTabs [data-baseweb="tab"] * {
-        color: inherit !important;
-    }
-
-    /* ===== CUSTOM SCROLLBAR ===== */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #3a2619;
-        border-radius: 8px;
-        border: 1px solid #ff9a3c;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #ff9a3c 0%, #ff6b35 100%);
-        border-radius: 8px;
-        border: 1px solid #ffb366;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #ff6b35 0%, #ff9a3c 100%);
-    }
-
-    /* ===== RESPONSIVE DESIGN ===== */
-    @media (max-width: 768px) {
-        .main-header {
-            font-size: 2.2rem;
-        }
+# Additional Info
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 1.5rem; 
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
+        border-radius: 15px; 
+        border: 2px solid #8a2be2;
+        margin-top: 1rem;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
+    '>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
         
-        .section-title {
-            font-size: 1.8rem;
-        }
-        
-        .stTabs [data-baseweb="tab"] {
-            padding: 12px 20px;
-            font-size: 0.9rem;
-        }
-        
-        .metric-card, .sensor-card, .energy-card, .cost-card, .success-card {
-            padding: 1.5rem;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
+        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</p>
+        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</p>
+        <p style="margin-top: 1rem; font-size: 0.8em; color: #c084fc;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 # ==================== INISIALISASI DATA ====================
 if 'devices' not in st.session_state:
