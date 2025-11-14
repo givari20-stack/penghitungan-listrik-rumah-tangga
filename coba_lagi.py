@@ -99,43 +99,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-with col2:
-    st.markdown(
-        """
-        <div class='developer-card'>
-            <h3>Hanif Nur Hakim</h3>
-            <p class='nim'><strong>NIM:</strong> 241734008</p>
-            <p class='role'>Hardware Engineer & System Integrator</p>
-            <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-
-# Additional Info
-st.markdown(
-    """
-    <div style='
-        text-align: center; 
-        padding: 1.5rem; 
-        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
-        border-radius: 15px; 
-        border: 2px solid #8a2be2;
-        margin-top: 1rem;
-        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
-    '>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
-        
-        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">⚡ Sistem Monitoring & Optimasi Konsumsi Energi Berbasis IoT</p>
-        <p style="color: #a855f7; font-style: italic; margin: 0.5rem 0;">🌱 Mendukung Efisiensi Energi dan Konservasi Lingkungan</p>
-        <p style="margin-top: 1rem; font-size: 0.8em; color: #c084fc;">© 2025 Smart Energy Monitor Pro. All rights reserved.</p>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
-
 # ==================== INISIALISASI DATA ====================
 if 'devices' not in st.session_state:
     st.session_state.devices = []
