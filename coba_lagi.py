@@ -114,6 +114,18 @@ if 'historical_data' not in st.session_state:
 if 'device_schedule' not in st.session_state:
     st.session_state.device_schedule = {}
 
+# ==================== INISIALISASI ESP32 ====================
+if 'esp32_connected' not in st.session_state:
+    st.session_state.esp32_connected = False
+if 'esp32_ip' not in st.session_state:
+    st.session_state.esp32_ip = "192.168.1.100"
+if 'esp32_port' not in st.session_state:
+    st.session_state.esp32_port = 8080
+if 'esp32_protocol' not in st.session_state:
+    st.session_state.esp32_protocol = "HTTP"
+if 'esp32_data_interval' not in st.session_state:
+    st.session_state.esp32_data_interval = 5
+
 # ==================== FUNGSI UTILITAS ====================
 def calculate_energy_cost(power_w, hours_per_day, days_per_month, rate_per_kwh):
     energy_kwh = (power_w * hours_per_day * days_per_month) / 1000
@@ -1012,167 +1024,307 @@ with tab7:
     # ==================== ESP32 IOT ====================
     st.markdown('<div class="section-title">📡 Koneksi ESP32 Smart Sensor IoT</div>', unsafe_allow_html=True)
 
-    # Connection status
+    # Configuration Section
+    st.markdown("### ⚙️ Konfigurasi Koneksi ESP32")
+    
     col1, col2, col3 = st.columns([2, 1, 1])
-
+    
     with col1:
-        st.markdown("### 🔗 Status Koneksi Real-time")
-
-        connection_status = st.selectbox(
-            "Status Sensor ESP32",
-            ["🟢 Connected - Active", "🟡 Connecting...", "🔴 Disconnected"],
-            index=0
+        # Input configuration
+        esp32_ip = st.text_input(
+            "🔗 IP Address ESP32",
+            value="192.168.1.100",
+            placeholder="192.168.1.100",
+            help="Masukkan IP address ESP32 di jaringan lokal"
         )
-
-        if "Connected" in connection_status:
-            st.success("✅ ESP32 berhasil terhubung dan streaming data!")
-
-            # Connection details
-            st.info("""
-            **Connection Info:**
-            - IP Address: 192.168.1.100
-            - Port: 8080
-            - Protocol: HTTP/WebSocket
-            - Update Rate: 2 seconds
-            - Uptime: 2h 34m 12s
-            """)
-        elif "Connecting" in connection_status:
-            with st.spinner("🔄 Menghubungkan ke ESP32..."):
-                st.warning("Mohon tunggu, sedang menghubungkan...")
-        else:
-            st.error("❌ ESP32 tidak terhubung. Periksa koneksi WiFi dan power supply.")
-
+    
     with col2:
-        st.markdown("### ⚙️ Quick Actions")
-        if st.button("🔄 Refresh", use_container_width=True):
-            st.success("✅ Connection refreshed!")
-            st.rerun()
-
-        if st.button("📡 Scan", use_container_width=True):
-            with st.spinner("Scanning..."):
-                st.info("ESP32 devices found: 1")
-
+        esp32_port = st.number_input(
+            "🔌 Port",
+            min_value=1,
+            max_value=65535,
+            value=8080,
+            help="Port yang digunakan ESP32 (biasanya 80, 8080, 8081)"
+        )
+    
     with col3:
-        st.markdown("### 🎛️ Controls")
+        protocol = st.selectbox(
+            "📡 Protocol",
+            ["HTTP", "WebSocket", "MQTT"],
+            index=0,
+            help="Protokol komunikasi yang digunakan"
+        )
+    
+    # Connection controls
+    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+    
+    with col1:
+        st.markdown("### 🔗 Status Koneksi")
+        if st.button("🔄 Connect to ESP32", use_container_width=True, type="primary"):
+            # Simulasi koneksi
+            st.session_state.esp32_connected = True
+            st.session_state.esp32_ip = esp32_ip
+            st.session_state.esp32_port = esp32_port
+            st.session_state.esp32_protocol = protocol
+            st.success(f"✅ Terhubung ke ESP32 di {esp32_ip}:{esp32_port} via {protocol}")
+            st.rerun()
+    
+    with col2:
         if st.button("⏸️ Pause", use_container_width=True):
             st.info("Data streaming paused")
-
-        if st.button("🔴 Stop", use_container_width=True):
-            st.warning("Monitoring stopped")
-
-    # Real-time sensor data
+    
+    with col3:
+        if st.button("🔴 Disconnect", use_container_width=True):
+            if 'esp32_connected' in st.session_state:
+                st.session_state.esp32_connected = False
+                st.warning("❌ Koneksi ESP32 diputuskan")
+                st.rerun()
+    
+    with col4:
+        if st.button("📡 Scan Network", use_container_width=True):
+            with st.spinner("Scanning for ESP32 devices..."):
+                # Simulasi scan network
+                st.info("Found 1 ESP32 device in network")
+    
+    # Connection status display
     st.markdown("---")
-    st.markdown("### 📊 Live Sensor Data")
-
-    if st.session_state.sensor_data:
-        latest_data = st.session_state.sensor_data[-1]
-
-        # Sensor metrics grid
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        with col1:
-            st.markdown(f"""
-            <div class="sensor-card">
-                <h3>⚡ Tegangan</h3>
-                <h2>{latest_data['voltage']} V</h2>
-                <p>AC Power</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col2:
-            st.markdown(f"""
-            <div class="energy-card">
-                <h3>🔌 Arus</h3>
-                <h2>{latest_data['current']} A</h2>
-                <p>Current Flow</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col3:
-            st.markdown(f"""
-            <div class="cost-card">
-                <h3>💡 Daya</h3>
-                <h2>{latest_data['power']} W</h2>
-                <p>Power Usage</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col4:
-            st.markdown(f"""
-            <div class="success-card">
-                <h3>🌡️ Suhu</h3>
-                <h2>{latest_data['temp']}°C</h2>
-                <p>Temperature</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col5:
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>💧 Humidity</h3>
-                <h2>{latest_data['humidity']}%</h2>
-                <p>Kelembapan</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Data log table
-        st.markdown("---")
-        st.markdown("### 📝 Recent Data Log (Last 10 Readings)")
-
-        log_data = []
-        for data in st.session_state.sensor_data[-10:][::-1]:  # Last 10, reversed
-            log_data.append({
-                "Timestamp": data["timestamp"],
-                "Voltage": f"{data['voltage']} V",
-                "Current": f"{data['current']} A",
-                "Power": f"{data['power']} W",
-                "Energy": f"{data['energy']:.3f} kWh",
-                "Temp": f"{data['temp']}°C",
-                "Humidity": f"{data['humidity']}%"
-            })
-
-        df_log = pd.DataFrame(log_data)
-        st.dataframe(df_log, use_container_width=True, hide_index=True)
-
-        # Download options
-        col1, col2 = st.columns(2)
-
-        with col1:
-            csv_data = pd.DataFrame(st.session_state.sensor_data).to_csv(index=False)
-            st.download_button(
-                "📥 Download All Data (CSV)",
-                csv_data,
-                "esp32_sensor_data_full.csv",
-                "text/csv",
-                use_container_width=True
-            )
-
-        with col2:
-            # Download last hour data
-            recent_data = st.session_state.sensor_data[-60:]  # Assuming 1min intervals
-            csv_recent = pd.DataFrame(recent_data).to_csv(index=False)
-            st.download_button(
-                "📥 Download Last Hour (CSV)",
-                csv_recent,
-                "esp32_recent_data.csv",
-                "text/csv",
-                use_container_width=True
-            )
-
-    else:
-        st.info("""
-        ## 📡 Menunggu Data dari ESP32...
-
-        **Sensor yang akan dimonitor:**
-        - ⚡ Tegangan (Voltage)
-        - 🔌 Arus (Current)
-        - 💡 Daya (Power)
-        - 🔋 Energi (Energy)
-        - 🌡️ Suhu (Temperature)
-        - 💧 Kelembapan (Humidity)
-
-        Pastikan ESP32 sudah terhubung dan mengirim data.
+    
+    if st.session_state.get('esp32_connected', False):
+        st.success(f"""
+        ## 🟢 TERHUBUNG
+        
+        **Connection Details:**
+        - **IP Address:** {st.session_state.esp32_ip}
+        - **Port:** {st.session_state.esp32_port}
+        - **Protocol:** {st.session_state.esp32_protocol}
+        - **Status:** Streaming data aktif
+        - **Uptime:** 2h 34m 12s
+        - **Last Update:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         """)
+        
+        # Data simulation controls
+        st.markdown("### 🎛️ Kontrol Data Simulasi")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            data_interval = st.slider(
+                "Interval Data (detik)",
+                min_value=1,
+                max_value=60,
+                value=5,
+                help="Interval pengiriman data dari ESP32"
+            )
+        
+        with col2:
+            if st.button("🔄 Generate New Data", use_container_width=True):
+                # Generate new sensor data
+                base_time = datetime.now()
+                new_sensor_data = []
+                
+                for i in range(10):  # Generate 10 data points
+                    timestamp = base_time - timedelta(minutes=i*5)
+                    power = 500 + np.random.randint(-100, 100)
+                    voltage = 220 + np.random.uniform(-2, 2)
+                    current = power / voltage
+                    energy = power * 0.5 / 1000
+                    
+                    new_sensor_data.append({
+                        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M"),
+                        "voltage": round(voltage, 1),
+                        "current": round(current, 2),
+                        "power": power,
+                        "energy": round(energy, 3),
+                        "temp": round(26 + np.random.uniform(-2, 4), 1),
+                        "humidity": round(60 + np.random.uniform(-10, 10), 0)
+                    })
+                
+                st.session_state.sensor_data = new_sensor_data + st.session_state.sensor_data[-50:]
+                st.success("✅ Data sensor baru di-generate!")
+                st.rerun()
+        
+        with col3:
+            if st.button("🗑️ Clear Sensor Data", use_container_width=True, type="secondary"):
+                st.session_state.sensor_data = []
+                st.info("📊 Data sensor dibersihkan")
+                st.rerun()
+        
+        # Real-time sensor data display
+        st.markdown("---")
+        st.markdown("### 📊 Live Sensor Data")
+        
+        if st.session_state.sensor_data:
+            latest_data = st.session_state.sensor_data[-1]
+            
+            # Sensor metrics grid
+            col1, col2, col3, col4, col5 = st.columns(5)
+            
+            with col1:
+                st.markdown(f"""
+                <div class="sensor-card">
+                    <h3>⚡ Tegangan</h3>
+                    <h2>{latest_data['voltage']} V</h2>
+                    <p>AC Power</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                <div class="energy-card">
+                    <h3>🔌 Arus</h3>
+                    <h2>{latest_data['current']} A</h2>
+                    <p>Current Flow</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                <div class="cost-card">
+                    <h3>💡 Daya</h3>
+                    <h2>{latest_data['power']} W</h2>
+                    <p>Power Usage</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                st.markdown(f"""
+                <div class="success-card">
+                    <h3>🌡️ Suhu</h3>
+                    <h2>{latest_data['temp']}°C</h2>
+                    <p>Temperature</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col5:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>💧 Humidity</h3>
+                    <h2>{latest_data['humidity']}%</h2>
+                    <p>Kelembapan</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Data log table
+            st.markdown("---")
+            st.markdown("### 📝 Recent Data Log (Last 10 Readings)")
+            
+            log_data = []
+            for data in st.session_state.sensor_data[-10:][::-1]:
+                log_data.append({
+                    "Timestamp": data["timestamp"],
+                    "Voltage": f"{data['voltage']} V",
+                    "Current": f"{data['current']} A",
+                    "Power": f"{data['power']} W",
+                    "Energy": f"{data['energy']:.3f} kWh",
+                    "Temp": f"{data['temp']}°C",
+                    "Humidity": f"{data['humidity']}%"
+                })
+            
+            df_log = pd.DataFrame(log_data)
+            st.dataframe(df_log, use_container_width=True, hide_index=True)
+            
+            # Download options
+            st.markdown("---")
+            st.markdown("### 📥 Export Data")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                csv_data = pd.DataFrame(st.session_state.sensor_data).to_csv(index=False)
+                st.download_button(
+                    "📥 Download All Data (CSV)",
+                    csv_data,
+                    "esp32_sensor_data_full.csv",
+                    "text/csv",
+                    use_container_width=True
+                )
+            
+            with col2:
+                recent_data = st.session_state.sensor_data[-60:]
+                csv_recent = pd.DataFrame(recent_data).to_csv(index=False)
+                st.download_button(
+                    "📥 Download Last Hour (CSV)",
+                    csv_recent,
+                    "esp32_recent_data.csv",
+                    "text/csv",
+                    use_container_width=True
+                )
+            
+            with col3:
+                # Export connection config
+                config_data = {
+                    "ip_address": st.session_state.esp32_ip,
+                    "port": st.session_state.esp32_port,
+                    "protocol": st.session_state.esp32_protocol,
+                    "last_connected": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                config_df = pd.DataFrame([config_data])
+                config_csv = config_df.to_csv(index=False)
+                st.download_button(
+                    "📄 Connection Config",
+                    config_csv,
+                    "esp32_connection_config.csv",
+                    "text/csv",
+                    use_container_width=True
+                )
+        
+        else:
+            st.info("""
+            ## 📡 Menunggu Data dari ESP32...
+            
+            **Klik "Generate New Data" untuk memulai simulasi data sensor.**
+            
+            **Sensor yang akan dimonitor:**
+            - ⚡ Tegangan (Voltage)
+            - 🔌 Arus (Current)
+            - 💡 Daya (Power)
+            - 🔋 Energi (Energy)
+            - 🌡️ Suhu (Temperature)
+            - 💧 Kelembapan (Humidity)
+            """)
+    
+    else:
+        st.warning("""
+        ## 🔌 ESP32 BELUM TERHUBUNG
+        
+        **Langkah-langkah koneksi:**
+        1. Masukkan **IP Address** ESP32 di jaringan WiFi yang sama
+        2. Masukkan **Port** yang digunakan ESP32 (biasanya 80 atau 8080)
+        3. Pilih **Protocol** yang sesuai
+        4. Klik tombol **"Connect to ESP32"**
+        
+        **Default Configuration:**
+        - IP: 192.168.1.100
+        - Port: 8080
+        - Protocol: HTTP
+        
+        **Pastikan ESP32:**
+        - Sudah terhubung ke WiFi
+        - Server sudah berjalan
+        - IP address sesuai dengan yang dimasukkan
+        """)
+        
+        # Quick connection templates
+        st.markdown("### 🚀 Quick Connection Templates")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("🏠 Home Network", use_container_width=True):
+                st.session_state.esp32_ip = "192.168.1.100"
+                st.session_state.esp32_port = 8080
+                st.info("✅ Template Home Network loaded - silakan klik Connect")
+        
+        with col2:
+            if st.button("📱 Hotspot", use_container_width=True):
+                st.session_state.esp32_ip = "192.168.4.1"
+                st.session_state.esp32_port = 80
+                st.info("✅ Template Hotspot loaded - silakan klik Connect")
+        
+        with col3:
+            if st.button("🏢 Campus", use_container_width=True):
+                st.session_state.esp32_ip = "10.10.10.100"
+                st.session_state.esp32_port = 8080
+                st.info("✅ Template Campus loaded - silakan klik Connect")
 
 # ==================== CSS CUSTOM ====================
 st.markdown("""
