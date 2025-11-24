@@ -5,7 +5,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh
 
 # ==================== KONFIGURASI ====================
 st.set_page_config(
@@ -24,6 +23,8 @@ if 'relay_history' not in st.session_state:
     st.session_state.relay_history = []
 if 'auto_refresh' not in st.session_state:
     st.session_state.auto_refresh = False
+if 'last_update' not in st.session_state:
+    st.session_state.last_update = "Belum ada data"
 
 # ==================== FUNGSI UTAMA ====================
 def get_sensor_data():
@@ -42,7 +43,8 @@ def get_sensor_data():
             st.session_state.sensor_history.append(data)
             if len(st.session_state.sensor_history) > 50:
                 st.session_state.sensor_history = st.session_state.sensor_history[-50:]
-                
+            
+            st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
             return True, data
         else:
             return False, f"HTTP Error: {response.status_code}"
@@ -121,24 +123,13 @@ with st.sidebar:
         st.session_state.esp_ip = new_ip
         st.success(f"IP diubah ke: {new_ip}")
     
-    # Auto Refresh
+    # Manual Refresh
     st.markdown("---")
-    st.subheader("🔄 Auto Refresh")
-    auto_refresh = st.checkbox("Aktifkan Auto Refresh", value=st.session_state.auto_refresh)
-    if auto_refresh != st.session_state.auto_refresh:
-        st.session_state.auto_refresh = auto_refresh
-    
-    if st.session_state.auto_refresh:
-        refresh_interval = st.slider("Interval (detik)", 5, 60, 10)
-        st_autorefresh(interval=refresh_interval * 1000, key="data_refresh")
-    
-    # Quick Actions
-    st.markdown("---")
-    st.subheader("🎯 Quick Actions")
+    st.subheader("🔄 Refresh Control")
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 Refresh Data", use_container_width=True):
+        if st.button("🔄 Refresh", use_container_width=True):
             st.rerun()
     
     with col2:
@@ -146,6 +137,7 @@ with st.sidebar:
             st.session_state.sensor_history = []
             st.session_state.relay_history = []
             st.success("History cleared!")
+            st.rerun()
     
     # Connection Test
     st.markdown("---")
@@ -157,6 +149,12 @@ with st.sidebar:
                 st.success("✅ Connected!")
             else:
                 st.error(f"❌ {result}")
+    
+    # System Info
+    st.markdown("---")
+    st.subheader("📊 System Info")
+    st.write(f"Data Points: {len(st.session_state.sensor_history)}")
+    st.write(f"Last Update: {st.session_state.last_update}")
 
 # ==================== HEADER ====================
 st.markdown("""
@@ -174,6 +172,14 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🎛️ Control Panel", "�
 with tab1:
     # ==================== DASHBOARD ====================
     st.subheader("📊 Real-time Sensor Dashboard")
+    
+    # Refresh button di dashboard
+    col_refresh, col_status = st.columns([1, 3])
+    with col_refresh:
+        if st.button("🔄 Refresh Data", key="dashboard_refresh"):
+            st.rerun()
+    with col_status:
+        st.info(f"Last update: {st.session_state.last_update}")
     
     # Ambil data terbaru
     success, data = get_sensor_data()
@@ -434,7 +440,7 @@ with tab4:
         
         st.metric("Data Points Collected", len(st.session_state.sensor_history))
         st.metric("Relay Actions", len(st.session_state.relay_history))
-        st.metric("Last Update", datetime.now().strftime("%H:%M:%S"))
+        st.metric("Last Update", st.session_state.last_update)
         
         st.markdown("### 🛠️ Tools")
         if st.button("Export Data CSV", use_container_width=True):
@@ -459,7 +465,3 @@ st.markdown("""
     <p>Dibuat dengan ❤️ menggunakan Streamlit</p>
 </div>
 """, unsafe_allow_html=True)
-
-# ==================== AUTO REFRESH INFO ====================
-if st.session_state.auto_refresh:
-    st.sidebar.info("🔄 Auto refresh aktif")
