@@ -53,10 +53,8 @@ if 'esp32_data_interval' not in st.session_state:
 # Inisialisasi status relay
 if 'relays' not in st.session_state:
     st.session_state.relays = {
-        "relay_1": {"name": "Lampu Utama", "status": False, "pin": 1},
-        "relay_2": {"name": "AC Ruang Tamu", "status": False, "pin": 2},
-        "relay_3": {"name": "Kulkas", "status": False, "pin": 3},
-        "relay_4": {"name": "Water Heater", "status": False, "pin": 4}
+        "relay_1": {"name": "Lampu Utama", "status": False, "pin": "r1"},
+        "relay_2": {"name": "Lampu Cadangan", "status": False, "pin": "r2"}
     }
 
 # ==================== FUNGSI UTILITAS ====================
@@ -92,10 +90,10 @@ def check_energy_alerts():
     # Alert untuk sensor anomali
     if st.session_state.sensor_data:
         latest = st.session_state.sensor_data[-1]
-        if latest["voltage"] < 210 or latest["voltage"] > 230:
+        if latest.get("voltage", 220) < 210 or latest.get("voltage", 220) > 230:
             alerts.append({
                 "type": "danger",
-                "message": f"⚡ Tegangan abnormal terdeteksi: {latest['voltage']} V!"
+                "message": f"⚡ Tegangan abnormal terdeteksi: {latest.get('voltage', 220)} V!"
             })
 
     st.session_state.alerts = alerts
@@ -166,26 +164,44 @@ def create_line_chart_matplotlib(data, x_col, y_col, title, x_label, y_label, co
     plt.tight_layout()
     return fig
 
-def control_relay(relay_id, status):
+def control_relay(relay_pin, status):
     """Fungsi untuk mengontrol relay via ESP32 - REAL IMPLEMENTATION"""
     try:
         ip = st.session_state.esp32_ip
-        relay_pin = st.session_state.relays[relay_id]["pin"]
         
-        # Kirim perintah ke ESP32
-        url = f"http://{ip}/relay"
-        payload = {
-            "pin": relay_pin,
-            "status": 1 if status else 0
-        }
+        # Format URL sesuai dengan ESP32
+        url = f"http://{ip}/relay?{relay_pin}={1 if status else 0}"
         
-        response = requests.post(url, json=payload, timeout=5)
+        response = requests.get(url, timeout=5)
         
         if response.status_code == 200:
-            # Update status di session state
-            st.session_state.relays[relay_id]["status"] = status
             action = "MENYALA" if status else "MATI"
-            return True, f"✅ Relay {st.session_state.relays[relay_id]['name']} {action}"
+            relay_name = next((r["name"] for r in st.session_state.relays.values() if r["pin"] == relay_pin), relay_pin)
+            return True, f"✅ {relay_name} {action}"
+        else:
+            return False, f"❌ Gagal mengontrol relay: HTTP {response.status_code}"
+            
+    except requests.exceptions.RequestException as e:
+        return False, f"❌ Tidak dapat terhubung ke ESP32: {str(e)}"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
+
+def control_multiple_relays(relay_commands):
+    """Kontrol multiple relay sekaligus"""
+    try:
+        ip = st.session_state.esp32_ip
+        
+        # Build URL dengan multiple parameters
+        params = []
+        for relay_pin, status in relay_commands.items():
+            params.append(f"{relay_pin}={1 if status else 0}")
+        
+        url = f"http://{ip}/relay?" + "&".join(params)
+        
+        response = requests.get(url, timeout=5)
+        
+        if response.status_code == 200:
+            return True, "✅ Semua relay berhasil dikontrol"
         else:
             return False, f"❌ Gagal mengontrol relay: HTTP {response.status_code}"
             
@@ -216,18 +232,27 @@ def fetch_sensor_data():
 def process_sensor_data(esp32_data):
     """Process data dari ESP32 dan update session state"""
     try:
-        # Asumsi format data: {"voltage": 220.5, "current": 1.2, "power": 264.6, "energy": 0.5, "temperature": 27.5, "humidity": 65}
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         
+        # Map data dari ESP32 ke format kita
         sensor_entry = {
             "timestamp": timestamp,
-            "voltage": esp32_data.get("voltage", 0),
-            "current": esp32_data.get("current", 0),
-            "power": esp32_data.get("power", 0),
-            "energy": esp32_data.get("energy", 0),
-            "temp": esp32_data.get("temperature", 25),
-            "humidity": esp32_data.get("humidity", 60)
+            "ldr": esp32_data.get("ldr", 0),
+            "statusLDR": esp32_data.get("statusLDR", "Tidak diketahui"),
+            "suhu": esp32_data.get("suhu", 0),
+            "statusSuhu": esp32_data.get("statusSuhu", "Tidak diketahui"),
+            "relay1": esp32_data.get("relay1", 0),
+            "relay2": esp32_data.get("relay2", 0),
+            # Calculate power based on relay status (asumsi 100W per relay aktif)
+            "power": (esp32_data.get("relay1", 0) + esp32_data.get("relay2", 0)) * 100,
+            "voltage": 220,  # Asumsi tegangan tetap
+            "current": ((esp32_data.get("relay1", 0) + esp32_data.get("relay2", 0)) * 100) / 220,
+            "energy": 0  # Akan dihitung berdasarkan waktu
         }
+        
+        # Update relay status berdasarkan data dari ESP32
+        st.session_state.relays["relay_1"]["status"] = bool(esp32_data.get("relay1", 0))
+        st.session_state.relays["relay_2"]["status"] = bool(esp32_data.get("relay2", 0))
         
         # Tambah ke sensor data history (keep last 100 entries)
         st.session_state.sensor_data.append(sensor_entry)
@@ -427,15 +452,20 @@ with tab1:
     carbon_footprint = calculate_carbon_footprint(total_energy)
 
     if st.session_state.sensor_data:
-        current_power = st.session_state.sensor_data[-1]["power"]
-        current_temp = st.session_state.sensor_data[-1]["temp"]
-        current_voltage = st.session_state.sensor_data[-1]["voltage"]
-        current_current = st.session_state.sensor_data[-1]["current"]
+        latest_data = st.session_state.sensor_data[-1]
+        current_power = latest_data.get("power", 0)
+        current_temp = latest_data.get("suhu", 25)
+        current_voltage = latest_data.get("voltage", 220)
+        current_current = latest_data.get("current", 0)
+        ldr_value = latest_data.get("ldr", 0)
+        ldr_status = latest_data.get("statusLDR", "Tidak diketahui")
     else:
         current_power = 0
         current_temp = 25
         current_voltage = 220
         current_current = 0
+        ldr_value = 0
+        ldr_status = "Tidak diketahui"
 
     # KPI Cards Row 1
     col1, col2, col3, col4 = st.columns(4)
@@ -565,31 +595,28 @@ with tab1:
         yearly_cost = total_cost * 12
         st.metric("Proyeksi Tahunan", f"Rp {yearly_cost:,.0f}")
 
-    # Peak hours analysis
-    st.markdown("---")
-    st.markdown("#### 🕐 Analisis Peak Hours")
-
-    col1, col2 = st.columns([2, 1])
-
-    with col1:
-        peak_info = """
-        **Kategori Waktu Penggunaan:**
-        - 🌅 **Off-Peak** (22:00 - 06:00): Tarif rendah, ideal untuk charging & perangkat besar
-        - ☀️ **Mid-Peak** (06:00 - 17:00): Tarif normal
-        - 🌆 **Peak** (17:00 - 22:00): Tarif tertinggi, konsumsi maksimal
-
-        **Rekomendasi:**
-        - Gunakan mesin cuci & water heater di jam off-peak
-        - Hindari AC bersamaan dengan perangkat besar di peak hours
-        - Manfaatkan timer untuk perangkat besar
-        """
-        st.info(peak_info)
-
-    with col2:
-        st.markdown("**Potensi Hemat:**")
-        potential_savings = total_cost * 0.20
-        st.success(f"Rp {potential_savings:,.0f}/bulan")
-        st.caption("Dengan optimasi jadwal penggunaan")
+    # Sensor Data from ESP32
+    if st.session_state.sensor_data:
+        st.markdown("---")
+        st.markdown("#### 📊 Data Sensor ESP32 Real-time")
+        
+        latest_data = st.session_state.sensor_data[-1]
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("🌡️ Suhu", f"{latest_data.get('suhu', 0)}°C", latest_data.get('statusSuhu', ''))
+        
+        with col2:
+            st.metric("💡 LDR", f"{latest_data.get('ldr', 0)}", latest_data.get('statusLDR', ''))
+        
+        with col3:
+            relay1_status = "ON" if latest_data.get('relay1', 0) else "OFF"
+            st.metric("🔌 Relay 1", relay1_status)
+        
+        with col4:
+            relay2_status = "ON" if latest_data.get('relay2', 0) else "OFF"
+            st.metric("🔌 Relay 2", relay2_status)
 
 with tab2:
     # ==================== DEVICES ====================
@@ -628,6 +655,7 @@ with tab2:
     else:
         st.info("📝 Belum ada perangkat yang ditambahkan. Gunakan tab 'Manage' untuk menambah perangkat atau klik 'Load Demo' di sidebar.")
 
+# Tab 3-6 tetap sama seperti sebelumnya (Analytics, Optimization, Historical, Manage)
 with tab3:
     # ==================== ANALYTICS ====================
     st.markdown('<div class="section-title">📈 Analisis Lanjutan</div>', unsafe_allow_html=True)
@@ -1082,11 +1110,10 @@ with tab7:
         - **Port:** {st.session_state.esp32_port}
         - **Protocol:** {st.session_state.esp32_protocol}
         - **Status:** Streaming data aktif
-        - **Uptime:** 2h 34m 12s
         - **Last Update:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         """)
         
-        # Data simulation controls
+        # Data controls
         st.markdown("### 🎛️ Kontrol Data")
         col1, col2, col3 = st.columns(3)
         
@@ -1118,56 +1145,69 @@ with tab7:
         
         # Real-time sensor data display
         st.markdown("---")
-        st.markdown("### 📊 Live Sensor Data")
+        st.markdown("### 📊 Live Sensor Data dari ESP32")
         
         if st.session_state.sensor_data:
             latest_data = st.session_state.sensor_data[-1]
             
             # Sensor metrics grid
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
             
             with col1:
                 st.markdown(f"""
                 <div class="sensor-card">
-                    <h3>⚡ Tegangan</h3>
-                    <h2>{latest_data['voltage']} V</h2>
-                    <p>AC Power</p>
+                    <h3>🌡️ Suhu</h3>
+                    <h2>{latest_data.get('suhu', 0)}°C</h2>
+                    <p>{latest_data.get('statusSuhu', '')}</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col2:
                 st.markdown(f"""
                 <div class="energy-card">
-                    <h3>🔌 Arus</h3>
-                    <h2>{latest_data['current']} A</h2>
-                    <p>Current Flow</p>
+                    <h3>💡 LDR</h3>
+                    <h2>{latest_data.get('ldr', 0)}</h2>
+                    <p>{latest_data.get('statusLDR', '')}</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col3:
+                relay1_status = bool(latest_data.get('relay1', 0))
                 st.markdown(f"""
-                <div class="cost-card">
-                    <h3>💡 Daya</h3>
-                    <h2>{latest_data['power']} W</h2>
-                    <p>Power Usage</p>
+                <div class="{'success-card' if relay1_status else 'cost-card'}">
+                    <h3>🔌 Relay 1</h3>
+                    <h2>{'🟢 ON' if relay1_status else '🔴 OFF'}</h2>
+                    <p>Lampu Utama</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col4:
+                relay2_status = bool(latest_data.get('relay2', 0))
                 st.markdown(f"""
-                <div class="success-card">
-                    <h3>🌡️ Suhu</h3>
-                    <h2>{latest_data['temp']}°C</h2>
-                    <p>Temperature</p>
+                <div class="{'success-card' if relay2_status else 'cost-card'}">
+                    <h3>🔌 Relay 2</h3>
+                    <h2>{'🟢 ON' if relay2_status else '🔴 OFF'}</h2>
+                    <p>Lampu Cadangan</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             with col5:
+                power = latest_data.get('power', 0)
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h3>💧 Humidity</h3>
-                    <h2>{latest_data['humidity']}%</h2>
-                    <p>Kelembapan</p>
+                    <h3>⚡ Daya</h3>
+                    <h2>{power} W</h2>
+                    <p>Konsumsi</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col6:
+                voltage = latest_data.get('voltage', 220)
+                st.markdown(f"""
+                <div class="sensor-card">
+                    <h3>🔋 Tegangan</h3>
+                    <h2>{voltage} V</h2>
+                    <p>AC Power</p>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -1175,10 +1215,10 @@ with tab7:
             st.markdown("---")
             st.markdown("### 🎛️ KONTROL RELAY ESP32")
             
-            st.info("💡 **Kontrol perangkat elektronik melalui relay ESP32**")
+            st.info("💡 **Kontrol relay melalui ESP32** - Format: `http://10.203.15.109/relay?r1=1&r2=0`")
             
             # Relay control grid
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2 = st.columns(2)
             
             with col1:
                 relay1 = st.session_state.relays["relay_1"]
@@ -1186,22 +1226,22 @@ with tab7:
                 <div class="relay-card {'active' if relay1['status'] else 'inactive'}">
                     <h3>💡 {relay1['name']}</h3>
                     <h2>{'🟢 ON' if relay1['status'] else '🔴 OFF'}</h2>
-                    <p>Pin: GPIO {relay1['pin']}</p>
+                    <p>Pin: {relay1['pin']}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 col1a, col1b = st.columns(2)
                 with col1a:
-                    if st.button("🔛 ON", key="relay1_on", use_container_width=True):
-                        success, message = control_relay("relay_1", True)
+                    if st.button("🔛 NYALAKAN", key="relay1_on", use_container_width=True):
+                        success, message = control_relay("r1", True)
                         if success:
                             st.success(message)
                         else:
                             st.error(message)
                         st.rerun()
                 with col1b:
-                    if st.button("🔴 OFF", key="relay1_off", use_container_width=True):
-                        success, message = control_relay("relay_1", False)
+                    if st.button("🔴 MATIKAN", key="relay1_off", use_container_width=True):
+                        success, message = control_relay("r1", False)
                         if success:
                             st.success(message)
                         else:
@@ -1212,80 +1252,24 @@ with tab7:
                 relay2 = st.session_state.relays["relay_2"]
                 st.markdown(f"""
                 <div class="relay-card {'active' if relay2['status'] else 'inactive'}">
-                    <h3>❄️ {relay2['name']}</h3>
+                    <h3>💡 {relay2['name']}</h3>
                     <h2>{'🟢 ON' if relay2['status'] else '🔴 OFF'}</h2>
-                    <p>Pin: GPIO {relay2['pin']}</p>
+                    <p>Pin: {relay2['pin']}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 col2a, col2b = st.columns(2)
                 with col2a:
-                    if st.button("🔛 ON", key="relay2_on", use_container_width=True):
-                        success, message = control_relay("relay_2", True)
+                    if st.button("🔛 NYALAKAN", key="relay2_on", use_container_width=True):
+                        success, message = control_relay("r2", True)
                         if success:
                             st.success(message)
                         else:
                             st.error(message)
                         st.rerun()
                 with col2b:
-                    if st.button("🔴 OFF", key="relay2_off", use_container_width=True):
-                        success, message = control_relay("relay_2", False)
-                        if success:
-                            st.success(message)
-                        else:
-                            st.error(message)
-                        st.rerun()
-            
-            with col3:
-                relay3 = st.session_state.relays["relay_3"]
-                st.markdown(f"""
-                <div class="relay-card {'active' if relay3['status'] else 'inactive'}">
-                    <h3>🍚 {relay3['name']}</h3>
-                    <h2>{'🟢 ON' if relay3['status'] else '🔴 OFF'}</h2>
-                    <p>Pin: GPIO {relay3['pin']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                col3a, col3b = st.columns(2)
-                with col3a:
-                    if st.button("🔛 ON", key="relay3_on", use_container_width=True):
-                        success, message = control_relay("relay_3", True)
-                        if success:
-                            st.success(message)
-                        else:
-                            st.error(message)
-                        st.rerun()
-                with col3b:
-                    if st.button("🔴 OFF", key="relay3_off", use_container_width=True):
-                        success, message = control_relay("relay_3", False)
-                        if success:
-                            st.success(message)
-                        else:
-                            st.error(message)
-                        st.rerun()
-            
-            with col4:
-                relay4 = st.session_state.relays["relay_4"]
-                st.markdown(f"""
-                <div class="relay-card {'active' if relay4['status'] else 'inactive'}">
-                    <h3>🔥 {relay4['name']}</h3>
-                    <h2>{'🟢 ON' if relay4['status'] else '🔴 OFF'}</h2>
-                    <p>Pin: GPIO {relay4['pin']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                col4a, col4b = st.columns(2)
-                with col4a:
-                    if st.button("🔛 ON", key="relay4_on", use_container_width=True):
-                        success, message = control_relay("relay_4", True)
-                        if success:
-                            st.success(message)
-                        else:
-                            st.error(message)
-                        st.rerun()
-                with col4b:
-                    if st.button("🔴 OFF", key="relay4_off", use_container_width=True):
-                        success, message = control_relay("relay_4", False)
+                    if st.button("🔴 MATIKAN", key="relay2_off", use_container_width=True):
+                        success, message = control_relay("r2", False)
                         if success:
                             st.success(message)
                         else:
@@ -1300,24 +1284,34 @@ with tab7:
             
             with col_b1:
                 if st.button("🎯 NYALAKAN SEMUA", use_container_width=True, type="primary"):
-                    for relay_id in st.session_state.relays:
-                        control_relay(relay_id, True)
-                    st.success("✅ Semua relay dinyalakan!")
+                    commands = {"r1": True, "r2": True}
+                    success, message = control_multiple_relays(commands)
+                    if success:
+                        st.success(message)
+                    else:
+                        st.error(message)
                     st.rerun()
             
             with col_b2:
                 if st.button("💤 MATIKAN SEMUA", use_container_width=True, type="secondary"):
-                    for relay_id in st.session_state.relays:
-                        control_relay(relay_id, False)
-                    st.success("✅ Semua relay dimatikan!")
+                    commands = {"r1": False, "r2": False}
+                    success, message = control_multiple_relays(commands)
+                    if success:
+                        st.success(message)
+                    else:
+                        st.error(message)
                     st.rerun()
             
             with col_b3:
                 if st.button("🔄 TOGGLE SEMUA", use_container_width=True):
-                    for relay_id in st.session_state.relays:
-                        current = st.session_state.relays[relay_id]["status"]
-                        control_relay(relay_id, not current)
-                    st.success("✅ Status semua relay dibalik!")
+                    current_r1 = st.session_state.relays["relay_1"]["status"]
+                    current_r2 = st.session_state.relays["relay_2"]["status"]
+                    commands = {"r1": not current_r1, "r2": not current_r2}
+                    success, message = control_multiple_relays(commands)
+                    if success:
+                        st.success(message)
+                    else:
+                        st.error(message)
                     st.rerun()
             
             # Relay status summary
@@ -1347,12 +1341,13 @@ with tab7:
             for data in st.session_state.sensor_data[-10:][::-1]:
                 log_data.append({
                     "Timestamp": data["timestamp"],
-                    "Voltage": f"{data['voltage']} V",
-                    "Current": f"{data['current']} A",
-                    "Power": f"{data['power']} W",
-                    "Energy": f"{data['energy']:.3f} kWh",
-                    "Temp": f"{data['temp']}°C",
-                    "Humidity": f"{data['humidity']}%"
+                    "Suhu": f"{data.get('suhu', 0)}°C",
+                    "Status Suhu": data.get('statusSuhu', ''),
+                    "LDR": data.get('ldr', 0),
+                    "Status LDR": data.get('statusLDR', ''),
+                    "Relay 1": "ON" if data.get('relay1', 0) else "OFF",
+                    "Relay 2": "ON" if data.get('relay2', 0) else "OFF",
+                    "Daya": f"{data.get('power', 0)} W"
                 })
             
             df_log = pd.DataFrame(log_data)
@@ -1411,12 +1406,10 @@ with tab7:
             **Klik "Refresh Data" untuk mengambil data sensor dari ESP32.**
             
             **Sensor yang akan dimonitor:**
-            - ⚡ Tegangan (Voltage)
-            - 🔌 Arus (Current)
-            - 💡 Daya (Power)
-            - 🔋 Energi (Energy)
-            - 🌡️ Suhu (Temperature)
-            - 💧 Kelembapan (Humidity)
+            - 🌡️ Suhu & Status Suhu
+            - 💡 LDR & Status Cahaya
+            - 🔌 Status Relay 1 & 2
+            - ⚡ Daya Konsumsi
             """)
     
     else:
@@ -1430,12 +1423,12 @@ with tab7:
         
         **Endpoint yang digunakan:**
         - `http://10.203.15.109/data` - Untuk data sensor
-        - `http://10.203.15.109/relay` - Untuk kontrol relay
+        - `http://10.203.15.109/relay?r1=1&r2=0` - Untuk kontrol relay
         
-        **Pastikan ESP32:**
-        - Sudah terhubung ke WiFi
-        - Server sudah berjalan
-        - Endpoint `/data` dan `/relay` tersedia
+        **Format Kontrol Relay:**
+        - Relay1 ON: `http://10.203.15.109/relay?r1=1`
+        - Relay1 OFF: `http://10.203.15.109/relay?r1=0`
+        - Kedua relay: `http://10.203.15.109/relay?r1=1&r2=0`
         """)
         
         # Quick connection templates
