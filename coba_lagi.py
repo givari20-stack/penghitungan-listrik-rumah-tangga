@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import numpy as np
+import requests
 
 # Try to import plotly, if not available use matplotlib
 try:
@@ -19,83 +20,6 @@ st.set_page_config(
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
-)
-
-# ==================== FOOTER ====================
-st.markdown("---")
-
-# ==================== FOOTER ====================
-st.markdown("---")
-
-# Footer Header
-st.markdown(
-    """
-    <div style='
-        text-align: center; 
-        padding: 2rem; 
-        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
-        border-radius: 20px; 
-        border: 3px solid #8a2be2;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 35px rgba(138, 43, 226, 0.3);
-    '>
-        <h2 style='color: #8a2be2; font-weight: 900; margin-bottom: 1rem;'>🎓 Smart Energy Monitor Pro</h2>
-        <p style='color: #d8c3ff; font-size: 1.2em; font-weight: 700;'>Project Tugas Akhir - D4 Teknik Konservasi Energi</p>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
-
-# Developer Cards
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown(
-        """
-        <div class='developer-card'>
-            <h3>Muhammad Givari Ramadhan Kagira</h3>
-            <p class='nim'><strong>NIM:</strong> 241734018</p>
-            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
-            <p class='role'>Full Stack Developer & IoT Specialist</p>
-            <p class='skills'>Software Architecture, Frontend, Backend, IoT Integration</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-
-with col2:
-    st.markdown(
-        """
-        <div class='developer-card'>
-            <h3>Hanif Nur Hakim</h3>
-            <p class='nim'><strong>NIM:</strong> 241734008</p>
-            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
-            <p class='role'>Hardware Engineer & System Integrator</p>
-            <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-
-# Additional Info
-st.markdown(
-    """
-    <div style='
-        text-align: center; 
-        padding: 1.5rem; 
-        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
-        border-radius: 15px; 
-        border: 2px solid #8a2be2;
-        margin-top: 1rem;
-        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
-    '>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
-        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
-        
-    </div>
-    """, 
-    unsafe_allow_html=True
 )
 
 # ==================== INISIALISASI DATA ====================
@@ -118,13 +42,22 @@ if 'device_schedule' not in st.session_state:
 if 'esp32_connected' not in st.session_state:
     st.session_state.esp32_connected = False
 if 'esp32_ip' not in st.session_state:
-    st.session_state.esp32_ip = "192.168.1.100"
+    st.session_state.esp32_ip = "10.203.15.109"
 if 'esp32_port' not in st.session_state:
-    st.session_state.esp32_port = 8080
+    st.session_state.esp32_port = 80
 if 'esp32_protocol' not in st.session_state:
     st.session_state.esp32_protocol = "HTTP"
 if 'esp32_data_interval' not in st.session_state:
     st.session_state.esp32_data_interval = 5
+
+# Inisialisasi status relay
+if 'relays' not in st.session_state:
+    st.session_state.relays = {
+        "relay_1": {"name": "Lampu Utama", "status": False, "pin": 1},
+        "relay_2": {"name": "AC Ruang Tamu", "status": False, "pin": 2},
+        "relay_3": {"name": "Kulkas", "status": False, "pin": 3},
+        "relay_4": {"name": "Water Heater", "status": False, "pin": 4}
+    }
 
 # ==================== FUNGSI UTILITAS ====================
 def calculate_energy_cost(power_w, hours_per_day, days_per_month, rate_per_kwh):
@@ -232,6 +165,77 @@ def create_line_chart_matplotlib(data, x_col, y_col, title, x_label, y_label, co
     
     plt.tight_layout()
     return fig
+
+def control_relay(relay_id, status):
+    """Fungsi untuk mengontrol relay via ESP32 - REAL IMPLEMENTATION"""
+    try:
+        ip = st.session_state.esp32_ip
+        relay_pin = st.session_state.relays[relay_id]["pin"]
+        
+        # Kirim perintah ke ESP32
+        url = f"http://{ip}/relay"
+        payload = {
+            "pin": relay_pin,
+            "status": 1 if status else 0
+        }
+        
+        response = requests.post(url, json=payload, timeout=5)
+        
+        if response.status_code == 200:
+            # Update status di session state
+            st.session_state.relays[relay_id]["status"] = status
+            action = "MENYALA" if status else "MATI"
+            return True, f"✅ Relay {st.session_state.relays[relay_id]['name']} {action}"
+        else:
+            return False, f"❌ Gagal mengontrol relay: HTTP {response.status_code}"
+            
+    except requests.exceptions.RequestException as e:
+        return False, f"❌ Tidak dapat terhubung ke ESP32: {str(e)}"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
+
+def fetch_sensor_data():
+    """Ambil data sensor dari ESP32 - REAL IMPLEMENTATION"""
+    try:
+        ip = st.session_state.esp32_ip
+        url = f"http://{ip}/data"
+        
+        response = requests.get(url, timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return True, data
+        else:
+            return False, f"HTTP {response.status_code}"
+            
+    except requests.exceptions.RequestException as e:
+        return False, f"Tidak dapat terhubung: {str(e)}"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def process_sensor_data(esp32_data):
+    """Process data dari ESP32 dan update session state"""
+    try:
+        # Asumsi format data: {"voltage": 220.5, "current": 1.2, "power": 264.6, "energy": 0.5, "temperature": 27.5, "humidity": 65}
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        sensor_entry = {
+            "timestamp": timestamp,
+            "voltage": esp32_data.get("voltage", 0),
+            "current": esp32_data.get("current", 0),
+            "power": esp32_data.get("power", 0),
+            "energy": esp32_data.get("energy", 0),
+            "temp": esp32_data.get("temperature", 25),
+            "humidity": esp32_data.get("humidity", 60)
+        }
+        
+        # Tambah ke sensor data history (keep last 100 entries)
+        st.session_state.sensor_data.append(sensor_entry)
+        if len(st.session_state.sensor_data) > 100:
+            st.session_state.sensor_data = st.session_state.sensor_data[-100:]
+            
+    except Exception as e:
+        st.error(f"Error processing sensor data: {str(e)}")
 
 def load_sample_data():
     """Data sample yang lebih komprehensif"""
@@ -577,6 +581,7 @@ with tab1:
         **Rekomendasi:**
         - Gunakan mesin cuci & water heater di jam off-peak
         - Hindari AC bersamaan dengan perangkat besar di peak hours
+        - Manfaatkan timer untuk perangkat besar
         """
         st.info(peak_info)
 
@@ -1030,66 +1035,45 @@ with tab7:
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
-        # Input configuration
+        # Set default ke IP ESP32 Anda
         esp32_ip = st.text_input(
             "🔗 IP Address ESP32",
-            value="192.168.1.100",
-            placeholder="192.168.1.100",
+            value=st.session_state.esp32_ip,
+            placeholder="10.203.15.109",
             help="Masukkan IP address ESP32 di jaringan lokal"
         )
+        if esp32_ip != st.session_state.esp32_ip:
+            st.session_state.esp32_ip = esp32_ip
     
     with col2:
         esp32_port = st.number_input(
             "🔌 Port",
             min_value=1,
             max_value=65535,
-            value=8080,
-            help="Port yang digunakan ESP32 (biasanya 80, 8080, 8081)"
+            value=st.session_state.esp32_port,
+            help="Port yang digunakan ESP32"
         )
-    
-    with col3:
-        protocol = st.selectbox(
-            "📡 Protocol",
-            ["HTTP", "WebSocket", "MQTT"],
-            index=0,
-            help="Protokol komunikasi yang digunakan"
-        )
-    
-    # Connection controls
-    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
-    
-    with col1:
-        st.markdown("### 🔗 Status Koneksi")
-        if st.button("🔄 Connect to ESP32", use_container_width=True, type="primary"):
-            # Simulasi koneksi
-            st.session_state.esp32_connected = True
-            st.session_state.esp32_ip = esp32_ip
+        if esp32_port != st.session_state.esp32_port:
             st.session_state.esp32_port = esp32_port
-            st.session_state.esp32_protocol = protocol
-            st.success(f"✅ Terhubung ke ESP32 di {esp32_ip}:{esp32_port} via {protocol}")
-            st.rerun()
-    
-    with col2:
-        if st.button("⏸️ Pause", use_container_width=True):
-            st.info("Data streaming paused")
     
     with col3:
-        if st.button("🔴 Disconnect", use_container_width=True):
-            if 'esp32_connected' in st.session_state:
-                st.session_state.esp32_connected = False
-                st.warning("❌ Koneksi ESP32 diputuskan")
-                st.rerun()
-    
-    with col4:
-        if st.button("📡 Scan Network", use_container_width=True):
-            with st.spinner("Scanning for ESP32 devices..."):
-                # Simulasi scan network
-                st.info("Found 1 ESP32 device in network")
+        st.markdown("### 🔗 Quick Actions")
+        if st.button("🔄 Connect & Fetch Data", use_container_width=True, type="primary"):
+            with st.spinner("Menghubungkan ke ESP32..."):
+                success, result = fetch_sensor_data()
+                if success:
+                    st.session_state.esp32_connected = True
+                    # Process sensor data
+                    process_sensor_data(result)
+                    st.success(f"✅ Terhubung ke {st.session_state.esp32_ip}!")
+                else:
+                    st.error(f"❌ Gagal: {result}")
+            st.rerun()
     
     # Connection status display
     st.markdown("---")
     
-    if st.session_state.get('esp32_connected', False):
+    if st.session_state.esp32_connected:
         st.success(f"""
         ## 🟢 TERHUBUNG
         
@@ -1103,7 +1087,7 @@ with tab7:
         """)
         
         # Data simulation controls
-        st.markdown("### 🎛️ Kontrol Data Simulasi")
+        st.markdown("### 🎛️ Kontrol Data")
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -1111,39 +1095,23 @@ with tab7:
                 "Interval Data (detik)",
                 min_value=1,
                 max_value=60,
-                value=5,
+                value=st.session_state.esp32_data_interval,
                 help="Interval pengiriman data dari ESP32"
             )
+            if data_interval != st.session_state.esp32_data_interval:
+                st.session_state.esp32_data_interval = data_interval
         
         with col2:
-            if st.button("🔄 Generate New Data", use_container_width=True):
-                # Generate new sensor data
-                base_time = datetime.now()
-                new_sensor_data = []
-                
-                for i in range(10):  # Generate 10 data points
-                    timestamp = base_time - timedelta(minutes=i*5)
-                    power = 500 + np.random.randint(-100, 100)
-                    voltage = 220 + np.random.uniform(-2, 2)
-                    current = power / voltage
-                    energy = power * 0.5 / 1000
-                    
-                    new_sensor_data.append({
-                        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M"),
-                        "voltage": round(voltage, 1),
-                        "current": round(current, 2),
-                        "power": power,
-                        "energy": round(energy, 3),
-                        "temp": round(26 + np.random.uniform(-2, 4), 1),
-                        "humidity": round(60 + np.random.uniform(-10, 10), 0)
-                    })
-                
-                st.session_state.sensor_data = new_sensor_data + st.session_state.sensor_data[-50:]
-                st.success("✅ Data sensor baru di-generate!")
-                st.rerun()
+            if st.button("🔄 Refresh Data", use_container_width=True):
+                success, result = fetch_sensor_data()
+                if success:
+                    process_sensor_data(result)
+                    st.success("✅ Data updated!")
+                else:
+                    st.error(f"❌ {result}")
         
         with col3:
-            if st.button("🗑️ Clear Sensor Data", use_container_width=True, type="secondary"):
+            if st.button("🗑️ Clear Data", use_container_width=True, type="secondary"):
                 st.session_state.sensor_data = []
                 st.info("📊 Data sensor dibersihkan")
                 st.rerun()
@@ -1203,6 +1171,174 @@ with tab7:
                 </div>
                 """, unsafe_allow_html=True)
             
+            # Relay Control Section
+            st.markdown("---")
+            st.markdown("### 🎛️ KONTROL RELAY ESP32")
+            
+            st.info("💡 **Kontrol perangkat elektronik melalui relay ESP32**")
+            
+            # Relay control grid
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                relay1 = st.session_state.relays["relay_1"]
+                st.markdown(f"""
+                <div class="relay-card {'active' if relay1['status'] else 'inactive'}">
+                    <h3>💡 {relay1['name']}</h3>
+                    <h2>{'🟢 ON' if relay1['status'] else '🔴 OFF'}</h2>
+                    <p>Pin: GPIO {relay1['pin']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col1a, col1b = st.columns(2)
+                with col1a:
+                    if st.button("🔛 ON", key="relay1_on", use_container_width=True):
+                        success, message = control_relay("relay_1", True)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+                with col1b:
+                    if st.button("🔴 OFF", key="relay1_off", use_container_width=True):
+                        success, message = control_relay("relay_1", False)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+            
+            with col2:
+                relay2 = st.session_state.relays["relay_2"]
+                st.markdown(f"""
+                <div class="relay-card {'active' if relay2['status'] else 'inactive'}">
+                    <h3>❄️ {relay2['name']}</h3>
+                    <h2>{'🟢 ON' if relay2['status'] else '🔴 OFF'}</h2>
+                    <p>Pin: GPIO {relay2['pin']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col2a, col2b = st.columns(2)
+                with col2a:
+                    if st.button("🔛 ON", key="relay2_on", use_container_width=True):
+                        success, message = control_relay("relay_2", True)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+                with col2b:
+                    if st.button("🔴 OFF", key="relay2_off", use_container_width=True):
+                        success, message = control_relay("relay_2", False)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+            
+            with col3:
+                relay3 = st.session_state.relays["relay_3"]
+                st.markdown(f"""
+                <div class="relay-card {'active' if relay3['status'] else 'inactive'}">
+                    <h3>🍚 {relay3['name']}</h3>
+                    <h2>{'🟢 ON' if relay3['status'] else '🔴 OFF'}</h2>
+                    <p>Pin: GPIO {relay3['pin']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col3a, col3b = st.columns(2)
+                with col3a:
+                    if st.button("🔛 ON", key="relay3_on", use_container_width=True):
+                        success, message = control_relay("relay_3", True)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+                with col3b:
+                    if st.button("🔴 OFF", key="relay3_off", use_container_width=True):
+                        success, message = control_relay("relay_3", False)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+            
+            with col4:
+                relay4 = st.session_state.relays["relay_4"]
+                st.markdown(f"""
+                <div class="relay-card {'active' if relay4['status'] else 'inactive'}">
+                    <h3>🔥 {relay4['name']}</h3>
+                    <h2>{'🟢 ON' if relay4['status'] else '🔴 OFF'}</h2>
+                    <p>Pin: GPIO {relay4['pin']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col4a, col4b = st.columns(2)
+                with col4a:
+                    if st.button("🔛 ON", key="relay4_on", use_container_width=True):
+                        success, message = control_relay("relay_4", True)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+                with col4b:
+                    if st.button("🔴 OFF", key="relay4_off", use_container_width=True):
+                        success, message = control_relay("relay_4", False)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+                        st.rerun()
+            
+            # Bulk actions untuk relay
+            st.markdown("---")
+            st.markdown("#### 🔄 Aksi Massal")
+            
+            col_b1, col_b2, col_b3 = st.columns(3)
+            
+            with col_b1:
+                if st.button("🎯 NYALAKAN SEMUA", use_container_width=True, type="primary"):
+                    for relay_id in st.session_state.relays:
+                        control_relay(relay_id, True)
+                    st.success("✅ Semua relay dinyalakan!")
+                    st.rerun()
+            
+            with col_b2:
+                if st.button("💤 MATIKAN SEMUA", use_container_width=True, type="secondary"):
+                    for relay_id in st.session_state.relays:
+                        control_relay(relay_id, False)
+                    st.success("✅ Semua relay dimatikan!")
+                    st.rerun()
+            
+            with col_b3:
+                if st.button("🔄 TOGGLE SEMUA", use_container_width=True):
+                    for relay_id in st.session_state.relays:
+                        current = st.session_state.relays[relay_id]["status"]
+                        control_relay(relay_id, not current)
+                    st.success("✅ Status semua relay dibalik!")
+                    st.rerun()
+            
+            # Relay status summary
+            st.markdown("---")
+            st.markdown("#### 📊 Status Relay Summary")
+            
+            active_relays = sum(1 for relay in st.session_state.relays.values() if relay["status"])
+            total_relays = len(st.session_state.relays)
+            
+            col_s1, col_s2, col_s3 = st.columns(3)
+            
+            with col_s1:
+                st.metric("Relay Aktif", f"{active_relays}/{total_relays}")
+            
+            with col_s2:
+                st.metric("Relay Non-Aktif", f"{total_relays - active_relays}/{total_relays}")
+            
+            with col_s3:
+                usage_pct = (active_relays / total_relays) * 100
+                st.metric("Usage", f"{usage_pct:.1f}%")
+            
             # Data log table
             st.markdown("---")
             st.markdown("### 📝 Recent Data Log (Last 10 Readings)")
@@ -1255,6 +1391,7 @@ with tab7:
                     "ip_address": st.session_state.esp32_ip,
                     "port": st.session_state.esp32_port,
                     "protocol": st.session_state.esp32_protocol,
+                    "data_interval": st.session_state.esp32_data_interval,
                     "last_connected": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 config_df = pd.DataFrame([config_data])
@@ -1271,7 +1408,7 @@ with tab7:
             st.info("""
             ## 📡 Menunggu Data dari ESP32...
             
-            **Klik "Generate New Data" untuk memulai simulasi data sensor.**
+            **Klik "Refresh Data" untuk mengambil data sensor dari ESP32.**
             
             **Sensor yang akan dimonitor:**
             - ⚡ Tegangan (Voltage)
@@ -1287,20 +1424,18 @@ with tab7:
         ## 🔌 ESP32 BELUM TERHUBUNG
         
         **Langkah-langkah koneksi:**
-        1. Masukkan **IP Address** ESP32 di jaringan WiFi yang sama
-        2. Masukkan **Port** yang digunakan ESP32 (biasanya 80 atau 8080)
-        3. Pilih **Protocol** yang sesuai
-        4. Klik tombol **"Connect to ESP32"**
+        1. Pastikan ESP32 terhubung ke jaringan yang sama
+        2. Masukkan **IP Address** ESP32: `10.203.15.109`
+        3. Klik tombol **"Connect & Fetch Data"**
         
-        **Default Configuration:**
-        - IP: 192.168.1.100
-        - Port: 8080
-        - Protocol: HTTP
+        **Endpoint yang digunakan:**
+        - `http://10.203.15.109/data` - Untuk data sensor
+        - `http://10.203.15.109/relay` - Untuk kontrol relay
         
         **Pastikan ESP32:**
         - Sudah terhubung ke WiFi
         - Server sudah berjalan
-        - IP address sesuai dengan yang dimasukkan
+        - Endpoint `/data` dan `/relay` tersedia
         """)
         
         # Quick connection templates
@@ -1309,22 +1444,99 @@ with tab7:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("🏠 Home Network", use_container_width=True):
-                st.session_state.esp32_ip = "192.168.1.100"
-                st.session_state.esp32_port = 8080
-                st.info("✅ Template Home Network loaded - silakan klik Connect")
+            if st.button("🏢 Campus ESP32", use_container_width=True):
+                st.session_state.esp32_ip = "10.203.15.109"
+                st.session_state.esp32_port = 80
+                st.success("✅ Campus ESP32 configuration loaded!")
+                st.rerun()
         
         with col2:
+            if st.button("🏠 Home Network", use_container_width=True):
+                st.session_state.esp32_ip = "192.168.1.100"
+                st.session_state.esp32_port = 80
+                st.info("✅ Home Network loaded")
+                st.rerun()
+        
+        with col3:
             if st.button("📱 Hotspot", use_container_width=True):
                 st.session_state.esp32_ip = "192.168.4.1"
                 st.session_state.esp32_port = 80
-                st.info("✅ Template Hotspot loaded - silakan klik Connect")
+                st.info("✅ Hotspot loaded")
+                st.rerun()
+
+# ==================== FOOTER ====================
+st.markdown("---")
+
+# Footer Header
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 2rem; 
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
+        border-radius: 20px; 
+        border: 3px solid #8a2be2;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 35px rgba(138, 43, 226, 0.3);
+    '>
+        <h2 style='color: #8a2be2; font-weight: 900; margin-bottom: 1rem;'>🎓 Smart Energy Monitor Pro</h2>
+        <p style='color: #d8c3ff; font-size: 1.2em; font-weight: 700;'>Project Tugas Akhir - D4 Teknik Konservasi Energi</p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
+# Developer Cards
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(
+        """
+        <div class='developer-card'>
+            <h3>Muhammad Givari Ramadhan Kagira</h3>
+            <p class='nim'><strong>NIM:</strong> 241734018</p>
+            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
+            <p class='role'>Full Stack Developer & IoT Specialist</p>
+            <p class='skills'>Software Architecture, Frontend, Backend, IoT Integration</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.markdown(
+        """
+        <div class='developer-card'>
+            <h3>Hanif Nur Hakim</h3>
+            <p class='nim'><strong>NIM:</strong> 241734008</p>
+            <p class='kelas'><strong>Kelas</strong> 2A-TKE</p>
+            <p class='role'>Hardware Engineer & System Integrator</p>
+            <p class='skills'>ESP32 Development, Sensor Integration, Circuit Design</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
+# Additional Info
+st.markdown(
+    """
+    <div style='
+        text-align: center; 
+        padding: 1.5rem; 
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%); 
+        border-radius: 15px; 
+        border: 2px solid #8a2be2;
+        margin-top: 1rem;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
+    '>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>📚 Mata Kuliah:</strong> Dasar Pemrograman</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 0.5rem; font-weight: 600;"><strong>🏫 Institusi:</strong> Politeknik Negeri Bandung</p>
+        <p style="color: #d8c3ff; font-size: 1em; margin-bottom: 1rem; font-weight: 600;"><strong>📅 Tahun:</strong> 2025</p>
         
-        with col3:
-            if st.button("🏢 Campus", use_container_width=True):
-                st.session_state.esp32_ip = "10.10.10.100"
-                st.session_state.esp32_port = 8080
-                st.info("✅ Template Campus loaded - silakan klik Connect")
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 # ==================== CSS CUSTOM ====================
 st.markdown("""
@@ -1491,6 +1703,62 @@ st.markdown("""
         transform: translateY(-5px);
         box-shadow: 0 12px 40px rgba(34, 197, 94, 0.3);
         border-color: #4ade80;
+    }
+
+    /* ===== RELAY CARD STYLES ===== */
+    .relay-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #2d2b55 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border: 2px solid #8a2be2;
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.2);
+    }
+    
+    .relay-card.active {
+        border-color: #22c55e;
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+        background: linear-gradient(135deg, #1a3a2e 0%, #2b5546 100%);
+    }
+    
+    .relay-card.inactive {
+        border-color: #ef4444;
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2);
+        background: linear-gradient(135deg, #3a1a1a 0%, #552b2b 100%);
+    }
+    
+    .relay-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(138, 43, 226, 0.3);
+    }
+    
+    .relay-card.active:hover {
+        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+    }
+    
+    .relay-card.inactive:hover {
+        box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+    }
+    
+    .relay-card h3 {
+        color: #d8c3ff;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .relay-card h2 {
+        color: #ffffff;
+        margin: 0.5rem 0;
+        font-weight: 800;
+        font-size: 1.4rem;
+    }
+    
+    .relay-card p {
+        color: #a855f7;
+        font-weight: 600;
+        margin: 0;
     }
 
     /* ===== SECTION STYLES ===== */
