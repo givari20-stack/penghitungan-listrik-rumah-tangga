@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import numpy as np
 
-# Try to import plotly, if not available use matplotlib
+
 try:
     import plotly.graph_objects as go
     import plotly.express as px
